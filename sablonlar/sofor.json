@@ -1,0 +1,12 @@
+{
+  "kod": "sofor-kodu",
+  "durak": "durak-kodu",
+  "ad": "Ad Soyad",
+  "hitap": "Ad Abi",
+  "telefon": "+905XXXXXXXXX",
+  "whatsapp": "+905XXXXXXXXX",
+  "plaka": "23 T 0000",
+  "arac": "Marka Model · Renk",
+  "yil": 10,
+  "yedekler": ["arkadas-1", "arkadas-2"]
+}

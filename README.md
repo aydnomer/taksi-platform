@@ -10,11 +10,14 @@ Elazığ'daki taksicilere ve duraklara satılan web platformu. Tek site, tek ala
 |---|---|
 | `/` | Platformun tanıtım ve satış sayfası (taksiciye gösterilen) |
 | `/d/<durak-kodu>/` | Durağın web sitesi: kaç araç müsait, şoförler, hizmetler, iletişim |
+| `/d/<durak-kodu>/yonetim/` | Durak paneli: bütün araçların durumu, bu ayki çağrılar, durak başkanı şoförün durumunu da değiştirebilir |
 | `/t/<şoför-kodu>/` | Şoförün sayfası. Pleksideki NFC ve QR buraya gider. Ana ekrana eklenince şoförün adıyla uygulama olur |
 | `/panel/` | Şoför paneli: Müsaitim / Yolcudayım / Hizmet dışı, anlaşmalı şoför sırası, aylık sayılar |
 | `/etiket/` | 10x10 cm pleksi baskısı (her araca 3 tane: arka sol, arka sağ, ön) |
 
-Demo: `/t/ahmet/` (Ahmet yolcuda, çağrı Mehmet'e yönleniyor), `/d/ornek-durak/`, `/panel/` (demo PIN `1234`).
+Demo: `/t/ahmet/` (Ahmet yolcuda, çağrı Mehmet'e yönleniyor), `/d/ornek-durak/` (sarı), `/d/kale-taksi/` (turuncu), `/t/kemal/` (tek şoför), `/panel/` ve `/d/ornek-durak/yonetim/` (demo PIN `1234`).
+
+**Hazır şablonlar ve tasarım kuralları:** `sablonlar/` klasörü ve [TASARIM.md](TASARIM.md). Yeni durak ya da şoför eklerken buradan başla.
 
 ## Meşgul şoförün yolcusu nasıl arkadaşına gider
 

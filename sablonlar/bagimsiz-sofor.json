@@ -1,0 +1,20 @@
+{
+  "kod": "sofor-kodu",
+  "durak": null,
+  "renk": "sari",
+  "ad": "Ad Soyad",
+  "hitap": "Ad Abi",
+  "telefon": "+905XXXXXXXXX",
+  "whatsapp": "+905XXXXXXXXX",
+  "plaka": "23 T 0000",
+  "arac": "Marka Model · Renk",
+  "yil": 10,
+  "googleYorum": "https://search.google.com/local/writereview?placeid=GOOGLE_PLACE_ID",
+  "tanitim": "Kendini iki cümleyle anlat.",
+  "hizmetler": [
+    { "ikon": "ucak", "baslik": "Havalimanı", "metin": "Kısa açıklama." },
+    { "ikon": "yol", "baslik": "Şehirler arası", "metin": "Kısa açıklama." }
+  ],
+  "bolgeler": ["Elazığ Havalimanı", "Otogar"],
+  "yedekler": ["guvendigi-arkadas"]
+}

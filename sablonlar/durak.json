@@ -1,0 +1,25 @@
+{
+  "kod": "durak-kodu",
+  "ad": "Durağın Adı",
+  "altAd": "Mahalle ya da kısa not",
+  "renk": "sari",
+  "slogan": "Elazığ'da taksi,|tek dokunuşla.",
+  "tanitim": "Müsait şoförümüz hangisiyse çağrın ona gider. Meşgul hat yok, bekleme yok.",
+  "telefon": "+905XXXXXXXXX",
+  "whatsapp": "+905XXXXXXXXX",
+  "adres": "Mahalle, Cadde No, Elazığ Merkez",
+  "konum": { "lat": 38.6748, "lng": 39.2225 },
+  "googleYorum": "https://search.google.com/local/writereview?placeid=GOOGLE_PLACE_ID",
+  "google": { "puan": 4.9, "sayi": 0 },
+  "kurulus": "1998",
+  "acik": "7/24",
+  "hizmetler": [
+    { "ikon": "sehir", "baslik": "Şehir içi", "metin": "Kısa açıklama." },
+    { "ikon": "ucak", "baslik": "Havalimanı", "metin": "Kısa açıklama." },
+    { "ikon": "yol", "baslik": "Şehirler arası", "metin": "Kısa açıklama." },
+    { "ikon": "ay", "baslik": "Gece", "metin": "Kısa açıklama." }
+  ],
+  "bolgeler": ["Elazığ Havalimanı", "Otogar"],
+  "sabitFiyatlar": [{ "yer": "Havalimanı", "fiyat": "000 TL" }],
+  "sss": [{ "s": "Soru?", "c": "Cevap." }]
+}

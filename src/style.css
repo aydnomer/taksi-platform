@@ -52,6 +52,20 @@
   color-scheme: light;
 }
 
+
+/* Durağa özel renkler (data/site.json → durak.renk). Hepsi üzerinde siyah yazı okunur. */
+:root[data-renk="turuncu"] { --sari: #ff8a1f; --sari-metin: #ff8a1f; }
+:root[data-renk="yesil"] { --sari: #3ddc84; --sari-metin: #3ddc84; }
+:root[data-renk="mavi"] { --sari: #5cc8ff; --sari-metin: #5cc8ff; }
+@media (prefers-color-scheme: light) {
+  :root[data-renk="turuncu"]:not([data-theme="dark"]) { --sari-metin: #a14b00; }
+  :root[data-renk="yesil"]:not([data-theme="dark"]) { --sari-metin: #11753d; }
+  :root[data-renk="mavi"]:not([data-theme="dark"]) { --sari-metin: #0a5f8f; }
+}
+:root[data-theme="light"][data-renk="turuncu"] { --sari-metin: #a14b00; }
+:root[data-theme="light"][data-renk="yesil"] { --sari-metin: #11753d; }
+:root[data-theme="light"][data-renk="mavi"] { --sari-metin: #0a5f8f; }
+
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -612,6 +626,58 @@ details.sss p { color: var(--soluk); padding-bottom: 16px; }
 }
 
 
+
+/* ---------- durak sitesi ekleri ---------- */
+.dk-hero .eylemler { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.btn-buyuk { min-height: 60px; padding: 0 26px; font-size: 18px; border-radius: 16px; }
+.g-rozet { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; padding: 8px 14px 8px 8px; border-radius: 999px; background: var(--yuzey); text-decoration: none; font-size: 14px; }
+.g-rozet .g { width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.g-rozet .g svg { width: 16px; height: 16px; }
+.g-rozet b { font: 700 20px/1 var(--f-baslik); }
+.g-rozet .yildizlar { color: #fbbc04; letter-spacing: 1px; }
+.g-rozet small { color: var(--soluk); }
+.canli-ust { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.canli-isik { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--yesil); }
+.canli-isik::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: nabiz 1.8s infinite; }
+.dk-koyu { background: var(--yuzey); }
+.dk-koyu .hizmet, .dk-koyu details.sss { background: var(--yuzey-2); }
+.hizmet .btn { justify-self: start; min-height: 42px; font-size: 14px; margin-top: 6px; }
+.bolgeler, .fiyat-tablo { margin-top: 26px; display: grid; gap: 12px; }
+.cipler-sabit { display: flex; flex-wrap: wrap; gap: 8px; }
+.cipler-sabit span { padding: 7px 14px; border-radius: 999px; background: var(--yuzey-2); font-size: 14px; font-weight: 500; }
+.fiyat-tablo { max-width: 560px; }
+.fiyat-satir { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--cizgi); }
+.fiyat-satir b { font-variant-numeric: tabular-nums; }
+.satir-btn { border: 0; width: 100%; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.secim-alan { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+.secim-alan select, .secim-alan input { width: 100%; min-height: 50px; border-radius: 12px; border: 1.5px solid var(--cizgi); background: var(--yuzey-2); color: var(--metin); padding: 0 14px; font: 500 16px var(--f-govde); }
+
+/* ---------- durak paneli ---------- */
+.ozet { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.ozet > div { background: var(--yuzey); border-radius: 18px; padding: 16px; }
+.ozet b { display: block; font: 700 44px/1 var(--f-baslik); font-variant-numeric: tabular-nums; }
+.ozet small { color: var(--soluk); font-size: 13px; font-weight: 600; }
+.ozet .musait b { color: var(--yesil); }
+.ozet .yolcuda b { color: var(--amber); }
+.ozet .kapali b { color: var(--gri); }
+.ozet-kucuk { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 10px; }
+.ozet-kucuk > div { background: var(--yuzey-2); padding: 12px; }
+.ozet-kucuk b { font-size: 34px; }
+.yn-satir { display: grid; gap: 10px; padding: 12px; border-radius: 16px; background: var(--yuzey-2); }
+.yn-dugmeler { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.yn-dugmeler button { min-height: 42px; border-radius: 12px; border: 1.5px solid var(--cizgi); background: transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--soluk); }
+.yn-dugmeler button[aria-pressed="true"].musait { background: var(--yesil); border-color: var(--yesil); color: #06210f; }
+.yn-dugmeler button[aria-pressed="true"].yolcuda { background: var(--amber); border-color: var(--amber); color: #1a0f00; }
+.yn-dugmeler button[aria-pressed="true"].kapali { background: var(--gri); border-color: var(--gri); color: #111; }
+.baskan { display: grid; gap: 28px; margin-top: 30px; align-items: center; }
+.baskan-ekran { background: var(--yuzey); border-radius: 24px; padding: 14px; box-shadow: var(--golge); max-width: 460px; width: 100%; margin-inline: auto; }
+@media (min-width: 860px) {
+  .ozet { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ozet-kucuk { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .yn-satir { grid-template-columns: 1fr 320px; align-items: center; }
+  .baskan { grid-template-columns: 1fr 1fr; gap: 48px; }
+}
+
 /* Gösterge paneli NFC dokunuşu sonrası tam ekran onay */
 .hizli { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: var(--zemin); }
 .hizli-ic { max-width: 420px; display: grid; gap: 14px; justify-items: center; text-align: center; }
@@ -686,3 +752,7 @@ details.sss p { color: var(--soluk); padding-bottom: 16px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* telefonda açılış butonları tam genişlik, alt çubuk tek satır */
+.dk-hero .eylemler .btn { flex: 1 1 220px; }
+.yapiskan .btn { white-space: nowrap; }

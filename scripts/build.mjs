@@ -58,11 +58,11 @@ for (const f of ["ikon-180.png", "ikon-192.png", "ikon-512.png", "ikon-512-maska
 await writeFile(path.join(DIST, ".nojekyll"), "");
 if (SITE.marka.alanAdi) await writeFile(path.join(DIST, "CNAME"), SITE.marka.alanAdi + "\n");
 
-function sayfa({ yol, view, kod, baslik, aciklama, uygAdi, manifest, yedek }) {
+function sayfa({ yol, view, kod, baslik, aciklama, uygAdi, manifest, yedek, renk }) {
   const derinlik = yol ? yol.split("/").length : 0;
   const base = derinlik ? "../".repeat(derinlik) : "./";
   return `<!doctype html>
-<html lang="tr">
+<html lang="tr"${renk && renk !== "sari" ? ` data-renk="${renk}"` : ""}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -133,12 +133,16 @@ await yaz("", "manifest.webmanifest", manifest({ ad: M.ad, kisa: M.ad, aciklama:
 for (const d of SITE.duraklar) {
   const yol = `d/${d.kod}`;
   await yaz(yol, "index.html", sayfa({
-    yol, view: "durak", kod: d.kod, manifest: true,
+    yol, view: "durak", kod: d.kod, manifest: true, renk: d.renk,
     baslik: `${d.ad} · ${M.sehir} Taksi`, aciklama: `${d.ad}: ${M.sehir}'da ${d.acik || "7/24"} taksi. Telefon ${telGoster(d.telefon)}.`,
     uygAdi: d.ad,
     yedek: `<p style="padding:40px 16px">${esc(d.ad)} · <a href="tel:${d.telefon}">${esc(telGoster(d.telefon))}</a></p>`
   }));
   await yaz(yol, "manifest.webmanifest", manifestAlt(manifest({ ad: d.ad, kisa: kisalt(d.ad), aciklama: `${d.ad} taksi çağır` }), 2));
+  await yaz(`${yol}/yonetim`, "index.html", sayfa({
+    yol: `${yol}/yonetim`, view: "yonetim", kod: d.kod, renk: d.renk,
+    baslik: `${d.ad} · Durak paneli`, aciklama: "Durağın bütün araçları tek ekranda.", uygAdi: `${kisalt(d.ad)} Panel`
+  }));
 }
 
 // Şoförler: her birinin kendi sayfası ve kendi "uygulaması" (manifest)
@@ -147,7 +151,7 @@ for (const s of SITE.soforler) {
   const d = SITE.duraklar.find((x) => x.kod === s.durak);
   const uyg = `${(s.hitap || s.ad).replace(/ Abi$/, "")} Taksi`;
   await yaz(yol, "index.html", sayfa({
-    yol, view: "sofor", kod: s.kod, manifest: true,
+    yol, view: "sofor", kod: s.kod, manifest: true, renk: d ? d.renk : s.renk,
     baslik: `${s.hitap || s.ad} Taksi${d ? " · " + d.ad : ""}`,
     aciklama: `${s.ad}, ${s.plaka}. Tek dokunuşla taksi çağır, WhatsApp'tan konum gönder.`,
     uygAdi: uyg,
