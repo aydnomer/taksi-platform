@@ -81,7 +81,7 @@ Supabase ayarı boşken site **demo modunda** çalışır: durum sadece o telefo
 
 ## Yayınlama
 
-`main` dalına her kayıt, GitHub Actions ile siteyi GitHub Pages'e yayınlar (`.github/workflows/yayinla.yml`). Repo ayarlarında **Settings → Pages → Source: GitHub Actions** seçili olmalı.
+`main` dalına her kayıt, GitHub Actions ile siteyi üretip `gh-pages` dalına koyar (`.github/workflows/yayinla.yml`). GitHub Pages bu dalı yayınlar: **Settings → Pages → Branch: gh-pages / (root)**.
 
 **Alan adı:** Pleksi basmadan önce alan adını al ve `marka.siteUrl` ile `marka.alanAdi`'nı güncelle. QR kodlar bu adresle üretilir; sonradan değişirse basılı pleksiler eski adrese gider.
 
