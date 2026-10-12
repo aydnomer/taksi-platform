@@ -20,13 +20,15 @@ Demo: `/t/ahmet/` (Ahmet yolcuda, çağrı Mehmet'e yönleniyor), `/d/ornek-dura
 
 Yolcu kendi şoförünü çağırmak istiyor, şoför yolcuda. Üç katman var, birbirini tamamlar:
 
-**1. Müsaitlik düğmesi (asıl sistem).** Şoför panelde tek dokunuşla durumunu seçer: *Müsait*, *Yolcuda (20 dk)* ya da *Hizmet dışı*. Her şoförün 2-3 kişilik sıralı bir "anlaşmalı şoför" listesi var. Yolcu sayfayı açtığında:
+**1. Gösterge paneline dokunma (asıl sistem).** Torpidoya iki küçük NFC etiketi yapışır: *YOLCU ALDIM* (`/panel/#dolu`) ve *BOŞALDIM* (`/panel/#bos`). Yolcu binince şoför telefonunu etikete dokundurur; uygulama açmaz, PIN yazmaz (telefonda giriş açık kalır). "Yolcuda" durumu 25 dakika sonra kendiliğinden "Müsait"e döner, yani çoğu yolculukta tek dokunuş yeter. İsteyen panelden elle de seçebilir: *Müsait*, *Yolcuda (10-60 dk)*, *Hizmet dışı*. Her şoförün 2-3 kişilik sıralı bir "anlaşmalı şoför" listesi var. Yolcu sayfayı açtığında:
 - Şoför müsaitse büyük buton onu arar.
 - Şoför yolcudaysa sayfa bunu söyler ve büyük buton listedeki **ilk müsait** arkadaşı arar. Yolcu isterse "Ahmet Abi'yi bekle" ile yine kendi şoförünü arayabilir.
 - Listedekilerin hepsi meşgulse durağın numarası çıkar.
 - WhatsApp'tan konum gönder butonu da aynı kurala uyar, mesaj doğru şoföre gider.
 
 **2. "Ulaşamadın mı?" (şoför düğmeye basmayı unutursa).** Yolcu şoförü arar, şoför açmaz. Yolcu sayfaya geri döndüğünde sayfa sorar: "Ahmet Abi açmadıysa dert etme, Mehmet Abi müsait." Böylece durum güncel olmasa da yolcu kaçmaz. 8 saatten eski durumlar "bilinmiyor" sayılır.
+
+**Taksimetre bağlantısı neden şimdi yok:** Taksimetre mühürlü, ayarlı bir cihaz; markası araçtan araca değişiyor ve dışarıya veri vermiyor. Kabloya müdahale mühürü ve garantiyi bozabilir. İleride en temiz yol, taksimetre yerine tavandaki TAKSİ lambasının (boşken yanar) elektriğini okuyan küçük bir GSM'li cihaz olur; önce bir oto elektrikçisi ve belediye ile konuşulmalı.
 
 **3. Telefon hattı yönlendirme (rehberden direkt arayanlar için).** Yolcu numarayı rehberden arıyorsa sayfa devreye giremez. Şoför telefonuna bir kere operatör kodu girer, meşgulken ya da açmazsa arama arkadaşına geçer:
 

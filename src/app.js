@@ -850,12 +850,12 @@
       '<p class="alt-baslik">Her şoför 2-3 arkadaşını seçer. Bugün senin yolcun ona gider, yarın onunki sana gelir. Yolcu beklemez, iş başka durağa kaçmaz.</p>' +
       '<div class="akis">' +
       '<div class="akis-adim"><span class="nokta sari">' + ik("tel") + "</span><div><b>Yolcu " + esc(ornek.hitap) + "'nin sayfasını açar</b><p>Telefonunda kayıtlı, tek dokunuş.</p></div></div>" +
-      '<div class="akis-adim"><span class="nokta amber">' + ik("saat") + "</span><div><b>" + esc(ornek.hitap) + " yolcuda</b><p>Panelden \"Yolcudayım, 20 dk\" demiş. Sayfa bunu yolcuya gösterir.</p></div></div>" +
+      '<div class="akis-adim"><span class="nokta amber">' + ik("saat") + "</span><div><b>" + esc(ornek.hitap) + " yolcuda</b><p>Yolcuyu alınca telefonunu torpidodaki etikete dokundurmuş. Sayfa bunu yolcuya gösterir.</p></div></div>" +
       '<div class="akis-adim"><span class="nokta yesil">' + ik("yonlen") + "</span><div><b>Çağrı " + esc(yedek.hitap) + "'ye gider</b><p>Listedeki ilk müsait arkadaş. Yolcu isterse yine de " + esc(ornek.hitap) + "'yi bekleyebilir.</p></div></div>" +
       '<div class="akis-adim"><span class="nokta">' + ik("uyari") + "</span><div><b>Durum güncel değilse</b><p>Yolcu aradı, " + esc(ornek.hitap) + " açmadı. Sayfaya dönünce \"Ulaşamadın mı?\" diye sorar ve müsait arkadaşı önerir.</p></div></div>" +
       "</div>" +
       '<div class="uc-katman">' +
-      '<div class="katman"><span class="rozet">1 · Sayfa</span><b>Müsaitlik düğmesi</b><p>Şoför panelde tek dokunuşla Müsait, Yolcuda ya da Hizmet dışı seçer. Yolcu sayfası anında değişir.</p></div>' +
+      '<div class="katman"><span class="rozet">1 · Sayfa</span><b>Gösterge paneline dokun</b><p>Yolcu binince şoför telefonunu torpidodaki NFC etikete dokundurur. Uygulama açmak yok. 25 dakika sonra kendiliğinden müsait olur.</p></div>' +
       '<div class="katman"><span class="rozet">2 · Geri dönüş</span><b>"Ulaşamadın mı?"</b><p>Şoför düğmeye basmayı unutsa da çalışır. Cevapsız arama sonrası sıradaki müsait arkadaş önerilir.</p></div>' +
       '<div class="katman"><span class="rozet">3 · Telefon</span><b>Hat yönlendirme</b><p>Rehberden direkt arayanlar için. Şoförün telefonuna bir kere kod girilir, meşgulken arama arkadaşına geçer.</p></div>' +
       "</div>" +
