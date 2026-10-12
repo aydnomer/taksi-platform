@@ -33,6 +33,8 @@ Yeni müşteri = şablonu `data/site.json` içine kopyala, alanları doldur, `"d
 - Uydurma rakam, uydurma yorum, uydurma referans yok. Google puanı sadece gerçek değer varsa (`google.puan`).
 - Google yorum butonu herkese gösterilir. Memnuniyete göre filtreleme yok (Google kuralı).
 - Yolcunun konumu saklanmaz, bunu sayfada söyle.
+- Sayılarda örnek veri her zaman "örnek veri" uyarısıyla görünür. Gerçek müşteriye sadece gerçek sayı gösterilir.
+- Şoför sadece kendi sayısını, durak başkanı sadece durağınınkini görür. Bütün müşterilerin karşılaştırması sadece `/rapor/`'da, bizde.
 
 ## Yerleşim kuralları
 
@@ -47,4 +49,5 @@ Yeni müşteri = şablonu `data/site.json` içine kopyala, alanları doldur, `"d
 2. Bir şoförün sayfası, meşgulken arkadaşına yönlendirme: `/t/ahmet/`
 3. Durak paneli, bütün araçlar tek ekranda: `/d/ornek-durak/yonetim/` (demo PIN 1234)
 4. Torpido etiketi: panelde "Yolcu aldım"a bas, ekranda büyük "YOLCUDASIN"
-5. Fiyat ve "1 araca 30 gün ücretsiz" teklifi: ana sayfa
+5. Sayılar: `/rapor/` (demo PIN 1234, "Örnek veriyle doldur"). "Ayın sonunda sana böyle bir rapor gelecek" de. Gerçek müşteri olunca kendi sayılarını göster.
+6. Fiyat ve "1 araca 30 gün ücretsiz" teklifi: ana sayfa

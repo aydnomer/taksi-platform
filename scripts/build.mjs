@@ -18,7 +18,8 @@ kontrol(SITE);
 const siteUrl = SITE.marka.siteUrl.replace(/\/$/, "");
 const qr = {};
 for (const s of SITE.soforler) {
-  qr[s.kod] = await QRCode.toString(`${siteUrl}/t/${s.kod}/`, {
+  // ?k=q: bu ziyaretin QR'dan geldiğini sayaca söyler (NFC çipinde ?k=n yazılır)
+  qr[s.kod] = await QRCode.toString(`${siteUrl}/t/${s.kod}/?k=q`, {
     type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" }
   });
 }
@@ -163,6 +164,7 @@ for (const s of SITE.soforler) {
 
 // Panel, etiketler, bulunamadı
 await yaz("panel", "index.html", sayfa({ yol: "panel", view: "panel", baslik: `Şoför Paneli · ${M.ad}`, aciklama: "Müsaitlik durumunu ve anlaşmalı şoförlerini yönet.", uygAdi: "Şoför Paneli" }));
+await yaz("rapor", "index.html", sayfa({ yol: "rapor", view: "rapor", baslik: `Rapor · ${M.ad}`, aciklama: "Bütün müşterilerin sayıları.", uygAdi: `${M.ad} Rapor` }));
 await yaz("etiket", "index.html", sayfa({ yol: "etiket", view: "etiket", baslik: `Etiketler · ${M.ad}`, aciklama: "10x10 cm NFC + QR pleksi baskısı.", uygAdi: M.ad }));
 // GitHub Pages bilinmeyen linklerde 404.html gösterir; base kök olduğu için mutlak yol kullanırız
 const kokYol = new URL(siteUrl + "/").pathname;

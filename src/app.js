@@ -40,6 +40,43 @@
     } catch (e) { return null; }
   }
 
+  // ---------- Ziyaretçi nereden geldi? ----------
+  // QR kodlarda ?k=q, NFC çiplerinde ?k=n yazılı. Ana ekrandaki uygulamadan açılırsa "uygulama".
+  // İsim, numara, konum yok: sadece bu telefona özel rastgele bir sayı (cihaz) tutulur.
+  var KAYNAK = (function () {
+    var q = (location.search.match(/[?&]k=([a-z0-9]+)/i) || [])[1];
+    if (q) {
+      var k = /^n/i.test(q) ? "nfc" : /^q/i.test(q) ? "qr" : "link";
+      ss("taksicim_kaynak" + location.pathname, k);
+      try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) {}
+      return k;
+    }
+    if ((window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true) return "uygulama";
+    var once = ss("taksicim_kaynak" + location.pathname);
+    if (once) return once;
+    if (/\/d\//.test(document.referrer || "")) return "durak";
+    return "link";
+  })();
+  var CIHAZ = (function () {
+    var c = ls("taksicim_cihaz");
+    if (!c) { c = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); ls("taksicim_cihaz", c); }
+    return c;
+  })();
+
+  if ((KAYNAK === "nfc" || KAYNAK === "qr") && !ls("taksicim_ilk_kaynak")) ls("taksicim_ilk_kaynak", KAYNAK);
+  // Oturum başına bir ziyaret; uygulama ana ekrandan ilk açıldığında (iPhone dahil) bir kurulum.
+  function ziyaretSay(kod) {
+    if (ss("taksicim_z_" + kod)) return;
+    ss("taksicim_z_" + kod, 1);
+    Depo.olay(kod, "ziyaret");
+    if (KAYNAK === "uygulama") kurulumSay(kod);
+  }
+  function kurulumSay(kod) {
+    if (ls("taksicim_kuruldu_" + kod)) return;
+    ls("taksicim_kuruldu_" + kod, 1);
+    Depo.olay(kod, "kurulum", ls("taksicim_ilk_kaynak"));
+  }
+
   var sofor = function (k) { return S.soforler.filter(function (s) { return s.kod === k; })[0] || null; };
   var durak = function (k) { return S.duraklar.filter(function (d) { return d.kod === k; })[0] || null; };
   var duragi = function (s) { return s && s.durak ? durak(s.durak) : null; };
@@ -105,6 +142,15 @@
   var YEDEK = {}; // panelden değiştirilen yedek sırası
   var OLAYLAR = [];
 
+  // Bir şoförün ya da durağın sayılarına giren sayfa kodları ("d:kod" = durak sitesi)
+  function olayKodlari(tip, kod) {
+    if (tip === "hepsi") return null;
+    var ic = {};
+    if (tip === "sofor") ic[kod] = 1;
+    if (tip === "durak") { ic["d:" + kod] = 1; S.soforler.forEach(function (s) { if (s.durak === kod) ic[s.kod] = 1; }); }
+    return ic;
+  }
+
   var Depo = SUPA ? {
     yukle: function () {
       var h = { apikey: SUPA.supabaseAnonKey, Authorization: "Bearer " + SUPA.supabaseAnonKey };
@@ -158,14 +204,19 @@
       fetch(SUPA.supabaseUrl + "/rest/v1/olaylar", {
         method: "POST",
         headers: { apikey: SUPA.supabaseAnonKey, Authorization: "Bearer " + SUPA.supabaseAnonKey, "Content-Type": "application/json", Prefer: "return=minimal" },
-        body: JSON.stringify({ kod: kod, tur: tur, hedef: hedef || null })
+        body: JSON.stringify({ kod: kod, tur: tur, hedef: hedef || null, kaynak: KAYNAK, cihaz: CIHAZ })
       }).catch(function () {});
     },
-    olaylar: function (kod) {
-      var h = { apikey: SUPA.supabaseAnonKey, Authorization: "Bearer " + SUPA.supabaseAnonKey };
-      var ay = new Date(); ay.setDate(1); ay.setHours(0, 0, 0, 0);
-      return fetch(SUPA.supabaseUrl + "/rest/v1/olaylar?select=kod,tur,hedef&zaman=gte." + ay.toISOString() + "&or=(kod.eq." + kod + ",hedef.eq." + kod + ")", { headers: h })
-        .then(function (r) { return r.json(); }).catch(function () { return []; });
+    // Sayılar sadece PIN'le okunur: şoför kendininkini, durak başkanı durağınınkini, biz hepsini.
+    // tip: "sofor" | "durak" | "hepsi". PIN yanlışsa null döner.
+    olaylar: function (tip, kod, pin, baslangic) {
+      return fetch(SUPA.supabaseUrl + "/rest/v1/rpc/olay_listesi", {
+        method: "POST",
+        headers: { apikey: SUPA.supabaseAnonKey, Authorization: "Bearer " + SUPA.supabaseAnonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ p_tip: tip, p_kod: kod || null, p_pin: pin, p_baslangic: baslangic ? new Date(baslangic).toISOString() : null })
+      }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (l) { return l ? l.map(function (o) { o.zaman = Date.parse(o.zaman); return o; }) : null; })
+        .catch(function () { return []; });
     }
   } : {
     yukle: function () {
@@ -201,12 +252,17 @@
       return Promise.resolve();
     },
     olay: function (kod, tur, hedef) {
-      OLAYLAR.push({ kod: kod, tur: tur, hedef: hedef || null, zaman: Date.now() });
-      if (OLAYLAR.length > 300) OLAYLAR = OLAYLAR.slice(-300);
+      OLAYLAR.push({ kod: kod, tur: tur, hedef: hedef || null, kaynak: KAYNAK, cihaz: CIHAZ, zaman: Date.now() });
+      if (OLAYLAR.length > 3000) OLAYLAR = OLAYLAR.slice(-3000);
       ls("taksicim_olay", OLAYLAR);
     },
-    olaylar: function (kod) {
-      return Promise.resolve(OLAYLAR.filter(function (o) { return o.kod === kod || o.hedef === kod; }));
+    olaylar: function (tip, kod, pin, baslangic) {
+      if (pin !== "1234") return Promise.resolve(null);
+      var l = OLAYLAR.concat(ls("taksicim_ornek") || []);
+      var ic = olayKodlari(tip, kod);
+      return Promise.resolve(l.filter(function (o) {
+        return (!baslangic || o.zaman >= baslangic) && (!ic || ic[o.kod] || ic[o.hedef]);
+      }));
     }
   };
 
@@ -272,7 +328,8 @@
   function ara(kisi, ctx) {
     // kisi: şoför ya da durak. ctx: { kaynak: sayfanın şoförü, yonlendi: bool }
     var demo = ctx.demo;
-    if (ctx.kaynak) Depo.olay(ctx.kaynak.kod, ctx.yonlendi ? "yonlendirme" : "arama", kisi.kod);
+    var ok = ctx.olayKod || (ctx.kaynak && ctx.kaynak.kod);
+    if (ok) Depo.olay(ok, ctx.yonlendi ? "yonlendirme" : "arama", kisi.kod);
     var ad = kisi.hitap || kisi.ad;
     if (demo || HASH) {
       var y = ctx.kaynak ? hedefSec(ctx.kaynak, [kisi.kod]) : null;
@@ -318,7 +375,7 @@
     var w = document.querySelector("[data-wa]");
     if (w) w.addEventListener("click", function () { konumGonder(y.hedef, c); });
     var dd = document.querySelector("[data-durak]");
-    if (dd) dd.addEventListener("click", function () { ara(d, { demo: demo }); });
+    if (dd) dd.addEventListener("click", function () { ara(d, c); });
   }
 
   document.addEventListener("visibilitychange", function () {
@@ -334,7 +391,8 @@
 
   function konumGonder(kisi, ctx) {
     var ad = kisi.hitap || kisi.ad;
-    if (ctx.kaynak) Depo.olay(ctx.kaynak.kod, ctx.yonlendi ? "yonlendirme" : "konum", kisi.kod);
+    var ok = ctx.olayKod || (ctx.kaynak && ctx.kaynak.kod);
+    if (ok) Depo.olay(ok, ctx.yonlendi ? "yonlendirme" : "konum", kisi.kod);
     function gonder(lat, lng) {
       var m = "Merhaba " + ad + ", taksi lazım.";
       if (lat != null) m += "\nKonumum: https://maps.google.com/?q=" + lat.toFixed(6) + "," + lng.toFixed(6);
@@ -404,7 +462,7 @@
   function anaEkranaEkle(ad, s) {
     if (kurulumIstegi) {
       kurulumIstegi.prompt();
-      kurulumIstegi.userChoice.then(function (c) { kurulumIstegi = null; if (c && c.outcome === "accepted" && s) Depo.olay(s.kod, "kurulum"); });
+      kurulumIstegi.userChoice.then(function (c) { kurulumIstegi = null; if (c && c.outcome === "accepted" && s) kurulumSay(s.kod); });
       return;
     }
     var rehber = s ? '<button class="btn btn-sari btn-blok" data-rehber-pencere>' + ik("rehber") + "Tek dokunuşla rehbere kaydet</button>" : "";
@@ -476,6 +534,7 @@
     var ad = s.hitap || s.ad;
     var ctx = { kaynak: s, yonlendi: sec.yonlendi, demo: demo };
     document.title = ad + " Taksi" + (d ? " · " + d.ad : "");
+    ziyaretSay(s.kod);
 
     var h = "";
     if (demo) h += demoSerit('Örnek sayfa. Butonlar gerçek arama yapmaz. <a href="' + link("panel", s.kod) + '">Şoför panelinden durumu değiştir</a>');
@@ -603,6 +662,7 @@
       var a = sofor(document.getElementById("esya-arac").value);
       var ne = document.getElementById("esya-ne").value.trim() || "bir eşyamı";
       var bugun = new Date().toLocaleDateString("tr-TR");
+      Depo.olay(s ? s.kod : "d:" + d.kod, "esya", a ? a.kod : null);
       var m = "Merhaba, " + bugun + " tarihinde " + (a ? a.plaka + " plakalı araçta" : "aracınızda") + " " + ne + " unuttum. Bulunursa bana haber verir misiniz?";
       if (demo || HASH) {
         pencere('<p class="etiket-ust">Demo</p><h3>Durağa giden mesaj</h3><div class="mesaj">' + esc(m) + '</div><p style="color:var(--soluk)">Gerçek sayfada bu mesaj ' + esc(hedef.ad) + "'nin WhatsApp'ına hazır gelir.</p><button class=\"btn btn-hayalet btn-blok\" data-kapat>Tamam</button>");
@@ -622,6 +682,7 @@
     var sf = S.soforler.filter(function (s) { return s.durak === d.kod; });
     var musait = sf.filter(function (s) { return durumu(s.kod).durum === "musait"; });
     document.title = d.ad + " · " + S.marka.sehir + " Taksi";
+    ziyaretSay("d:" + d.kod);
     var ikonlar = { sehir: "sehir", ucak: "ucak", yol: "yol", ay: "ay", kalkan: "kalkan", saat: "saat" };
 
     var h = "";
@@ -687,25 +748,25 @@
     h += '<div class="yapiskan durak"><button class="btn btn-sari" data-musait-cagir>' + ik("tel") + 'Taksi çağır</button><button class="btn btn-wa" data-durak-konum>' + ik("konum") + "Konum</button></div>";
     app.innerHTML = h;
 
-    app.querySelectorAll("[data-durak-ara]").forEach(function (b) { b.addEventListener("click", function () { ara(d, { demo: demo }); }); });
+    app.querySelectorAll("[data-durak-ara]").forEach(function (b) { b.addEventListener("click", function () { ara(d, { demo: demo, olayKod: "d:" + d.kod }); }); });
     app.querySelectorAll("[data-durak-konum]").forEach(function (b) {
       b.addEventListener("click", function () {
         var m = musait.length ? musait[Math.floor(Math.random() * musait.length)] : null;
-        konumGonder(m || d, { demo: demo, kaynak: m, yonlendi: false });
+        konumGonder(m || d, { demo: demo, kaynak: m, yonlendi: false, olayKod: "d:" + d.kod });
       });
     });
     app.querySelectorAll("[data-musait-cagir]").forEach(function (b) {
       b.addEventListener("click", function () {
-        if (!musait.length) return ara(d, { demo: demo });
+        if (!musait.length) return ara(d, { demo: demo, olayKod: "d:" + d.kod });
         var m = musait[Math.floor(Math.random() * musait.length)];
-        ara(m, { kaynak: m, yonlendi: false, demo: demo });
+        ara(m, { kaynak: m, yonlendi: false, demo: demo, olayKod: "d:" + d.kod });
       });
     });
     app.querySelectorAll("[data-sofor-ara]").forEach(function (b) {
       b.addEventListener("click", function () {
         var s = sofor(b.dataset.soforAra);
         if (hedefSec(s).yonlendi) { location.href = link("sofor", s.kod); if (HASH) rota(); return; }
-        ara(s, { kaynak: s, yonlendi: false, demo: demo });
+        ara(s, { kaynak: s, yonlendi: false, demo: demo, olayKod: "d:" + d.kod });
       });
     });
     var pb = app.querySelector("[data-paylas]");
@@ -761,6 +822,7 @@
     });
     h += "</div></div>";
     h += '<div class="kutu"><p style="font-weight:700">Yolcu durakta kaldı mı?</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Bir şoför meşgulken gelen çağrının durağın başka aracına gitmesi. Bu çağrılar eskiden başka durağa giderdi.</p><div class="serit" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><b id="ay-yonlenen">…</b><small>Durak içinde yönlendirilen</small></div><div><b id="ay-konum">…</b><small>WhatsApp konumla gelen</small></div></div></div>';
+    h += '<div class="kutu"><p style="font-weight:700">Durağın sayıları</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Bütün araçların toplamı: pleksi okutma, uygulamayı kuran yolcu, çağrılar. İsim ve numara yok, sadece sayı.</p><div id="yn-sayilar"></div></div>';
     h += '<div class="kutu" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))"><a class="btn btn-hayalet" href="' + link("durak", d.kod) + '">Durak sitesini aç</a><a class="btn btn-hayalet" href="' + (HASH ? "#etiket-d-" + d.kod : link("etiket") + "#d-" + d.kod) + '">Etiketleri yazdır</a><a class="btn btn-hayalet" href="https://wa.me/' + waNo(S.marka.iletisimTelefon) + "?text=" + encodeURIComponent(d.ad + " için yeni şoför eklemek istiyorum.") + '" target="_blank" rel="noopener">Yeni şoför ekle</a></div>';
     h += "</div>";
     app.innerHTML = h;
@@ -777,24 +839,19 @@
     var c = app.querySelector("[data-cikis]");
     if (c) c.addEventListener("click", function () { ls(anahtar, null); sayfaYonetim(d.kod); });
 
-    Promise.all(sf.map(function (s) { return Depo.olaylar(s.kod); })).then(function (listeler) {
-      var ay = new Date(); ay.setDate(1); ay.setHours(0, 0, 0, 0);
-      var tum = {}, top = 0, yon = 0, kon = 0;
-      listeler.forEach(function (l) { l.forEach(function (o) { if (!o.zaman || +new Date(o.zaman) >= +ay) tum[(o.id || "") + o.kod + o.tur + o.hedef + o.zaman] = o; }); });
-      Object.keys(tum).forEach(function (k) {
-        var o = tum[k];
-        if (o.tur === "arama" || o.tur === "konum" || o.tur === "yonlendirme") top++;
-        if (o.tur === "yonlendirme") yon++;
-        if (o.tur === "konum") kon++;
-      });
+    var ayBasi = donemAraligi("bu-ay").bas;
+    Depo.olaylar("durak", d.kod, giris.pin, ayBasi).then(function (ol) {
+      ol = ol || [];
+      var r = sayilar(ol, olayKodlari("durak", d.kod));
       sf.forEach(function (s) {
-        var n = Object.keys(tum).filter(function (k) { var o = tum[k]; return (o.tur === "arama" || o.tur === "konum" || o.tur === "yonlendirme") && (o.hedef || o.kod) === s.kod; }).length;
+        var n = ol.filter(function (o) { return CAGRI[o.tur] && (o.hedef || o.kod) === s.kod; }).length;
         var el = app.querySelector('[data-ay="' + s.kod + '"]');
         if (el) el.textContent = "bu ay " + n + " çağrı";
       });
       var set = function (id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
-      set("ay-toplam", top); set("ay-yonlenen", yon); set("ay-konum", kon);
+      set("ay-toplam", r.cagri); set("ay-yonlenen", r.kurtarilan); set("ay-konum", r.konum);
     });
+    sayiPaneli(document.getElementById("yn-sayilar"), "durak", d.kod, giris.pin, d.ad, null);
   }
 
   // ======================================================
@@ -874,7 +931,7 @@
     h += '<div class="kutu"><p style="font-weight:700">Meşgulken çağrılar kime gitsin?</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Sırayla bakılır: ilk müsait olan arkadaşına gider. Sen müsaitken de onların yolcusu sana gelir.</p><div class="liste" id="yedek-liste"></div>' +
       '<label for="yedek-ekle">Arkadaş ekle<select id="yedek-ekle"><option value="">Seç…</option></select></label></div>';
 
-    h += '<div class="kutu"><p style="font-weight:700">Bu ay</p><div class="serit" id="istatistik" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><b>…</b><small>Sayfandan arama</small></div><div><b>…</b><small>Sana yönlendirilen</small></div></div></div>';
+    h += '<div class="kutu"><p style="font-weight:700">Sayıların</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Kaç yolcu pleksini okuttu, kaçı uygulamanı kurdu, kaçı seni aradı. İsim ve numara yok, sadece sayı.</p><div id="istatistik"></div></div>';
 
     h += '<div class="kutu"><p style="font-weight:700">Telefonunu da ayarla</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Yolcu seni rehberden direkt ararsa sayfa devreye giremez. Bunun için telefonundan bir kere yönlendirme kodu çevir; meşgulken ya da açmazsan arama arkadaşına geçer. Kodu tuşlara yaz, ara tuşuna bas.</p>' +
       '<div class="tablo-kap"><table class="tablo"><tbody>' +
@@ -947,13 +1004,226 @@
     var c = app.querySelector("[data-cikis]");
     if (c) c.addEventListener("click", function () { ls("taksicim_giris", null); sayfaPanel(); });
 
-    Depo.olaylar(s.kod).then(function (ol) {
-      var ay = new Date(); ay.setDate(1); ay.setHours(0, 0, 0, 0);
-      ol = ol.filter(function (o) { return !o.zaman || +new Date(o.zaman) >= +ay; });
-      var arama = ol.filter(function (o) { return o.kod === s.kod && (o.tur === "arama" || o.tur === "konum"); }).length;
-      var gelen = ol.filter(function (o) { return o.hedef === s.kod && o.kod !== s.kod && o.tur === "yonlendirme"; }).length;
-      var el = document.getElementById("istatistik");
-      if (el) el.innerHTML = "<div><b>" + arama + "</b><small>Sayfandan arama ve konum</small></div><div><b>" + gelen + "</b><small>Arkadaşlarından sana gelen</small></div>";
+    sayiPaneli(document.getElementById("istatistik"), "sofor", s.kod, giris.pin, s.ad, null);
+  }
+
+  // ======================================================
+  // SAYILAR: kim, nereden geldi, ne yaptı (satışta ve yenilemede gösterilir)
+  // ======================================================
+  var DONEMLER = [["bu-ay", "Bu ay"], ["gecen-ay", "Geçen ay"], ["7-gun", "Son 7 gün"], ["hepsi", "Başından beri"]];
+  function donemAraligi(k) {
+    var n = new Date(), ay = new Date(n.getFullYear(), n.getMonth(), 1);
+    if (k === "gecen-ay") return { bas: +new Date(n.getFullYear(), n.getMonth() - 1, 1), bit: +ay, ad: new Date(n.getFullYear(), n.getMonth() - 1, 1).toLocaleDateString("tr-TR", { month: "long", year: "numeric" }) };
+    if (k === "7-gun") return { bas: Date.now() - 7 * 864e5, bit: null, ad: "son 7 gün" };
+    if (k === "hepsi") return { bas: null, bit: null, ad: "başından beri" };
+    return { bas: +ay, bit: null, ad: n.toLocaleDateString("tr-TR", { month: "long", year: "numeric" }) };
+  }
+  var PLEKSI = { nfc: 1, qr: 1 };
+  var CAGRI = { arama: 1, konum: 1, yonlendirme: 1 };
+
+  // ol: olay listesi, ic: sayılacak sayfa kodları (null = hepsi)
+  function sayilar(ol, ic) {
+    var r = { ziyaret: 0, durakZiyaret: 0, nfc: 0, qr: 0, uygulama: 0, tekil: 0, tekrar: 0, kurulum: 0, plekKurulum: 0, rehber: 0, arama: 0, konum: 0,
+      kurtarilan: 0, cagri: 0, uygArama: 0, plekCagri: 0, gelen: 0, google: 0, plekGoogle: 0, paylas: 0, esya: 0, gun: {} };
+    var plekCihaz = {}, cihazGun = {};
+    var icinde = function (k) { return !ic || !!ic[k]; };
+    ol.forEach(function (o) { if (icinde(o.kod) && PLEKSI[o.kaynak] && o.cihaz) plekCihaz[o.cihaz] = 1; });
+    ol.forEach(function (o) {
+      // Başka şoförün/durağın sayfasından bu gruba gelen çağrı
+      if (ic && CAGRI[o.tur] && ic[o.hedef] && !ic[o.kod]) r.gelen++;
+      if (!icinde(o.kod)) return;
+      var p = !!PLEKSI[o.kaynak];
+      var gun = new Date(o.zaman).toISOString().slice(0, 10);
+      if (o.tur === "ziyaret") {
+        if (String(o.kod).indexOf("d:") === 0) r.durakZiyaret++; else r.ziyaret++;
+        if (o.kaynak === "nfc") r.nfc++;
+        if (o.kaynak === "qr") r.qr++;
+        if (o.kaynak === "uygulama") r.uygulama++;
+        if (o.cihaz) (cihazGun[o.cihaz] = cihazGun[o.cihaz] || {})[gun] = 1;
+      } else if (o.tur === "kurulum") {
+        r.kurulum++;
+        if (p || PLEKSI[o.hedef] || plekCihaz[o.cihaz]) r.plekKurulum++;
+      } else if (CAGRI[o.tur]) {
+        r.cagri++;
+        r.gun[gun] = (r.gun[gun] || 0) + 1;
+        if (o.tur === "arama") r.arama++;
+        if (o.tur === "konum") r.konum++;
+        if (o.tur === "yonlendirme") r.kurtarilan++;
+        if (o.kaynak === "uygulama") r.uygArama++;
+        if (p) r.plekCagri++;
+      } else if (o.tur === "google") { r.google++; if (p) r.plekGoogle++; }
+      else if (r[o.tur] != null) r[o.tur]++;
+    });
+    var cs = Object.keys(cihazGun);
+    r.tekil = cs.length;
+    r.tekrar = cs.filter(function (c) { return Object.keys(cihazGun[c]).length > 1; }).length;
+    return r;
+  }
+
+  var KUTULAR = [
+    ["Araçtaki pleksi", [["nfc", "Telefonu dokundurup açan"], ["qr", "QR okutan"], ["plekKurulum", "Pleksiden uygulamayı kuran"], ["plekCagri", "Pleksiden çağıran"], ["plekGoogle", "Pleksiden Google yorumuna giden"]]],
+    ["Uygulama", [["kurulum", "Uygulamayı kuran"], ["uygulama", "Uygulamadan açılış"], ["uygArama", "Uygulamadan çağıran"], ["tekrar", "Tekrar gelen yolcu"]]],
+    ["Çağrılar", [["cagri", "Toplam çağrı"], ["arama", "Telefonla arama"], ["konum", "WhatsApp'tan konum"], ["kurtarilan", "Meşgulken arkadaşa giden"], ["gelen", "Başka sayfalardan gelen"]]],
+    ["Diğer", [["ziyaret", "Sayfa açılışı"], ["durakZiyaret", "Durak sitesi açılışı"], ["tekil", "Farklı telefon"], ["rehber", "Rehbere kaydeden"], ["google", "Google yorumuna giden"], ["paylas", "Yolculuğunu ailesine gönderen"], ["esya", "Kayıp eşya bildirimi"]]]
+  ];
+  function sayiKutulari(r, tip) {
+    return KUTULAR.map(function (g) {
+      var k = g[1].filter(function (x) { return !(x[0] === "durakZiyaret" && tip === "sofor") && !(x[0] === "gelen" && tip === "hepsi"); });
+      return '<div class="sy-grup"><p class="sy-baslik">' + g[0] + '</p><div class="sy-izgara">' + k.map(function (x) {
+        return '<div class="sy"><b>' + r[x[0]] + "</b><small>" + x[1] + "</small></div>";
+      }).join("") + "</div></div>";
+    }).join("") + gunGrafik(r.gun) +
+      '<p class="sy-not">Google yorumuna giden: butona basan sayısı; yorumu yazıp yazmadığını Google bize söylemez. WhatsApp: mesaj ekranı açılan sayısı. Uygulamayı kuran: Android\'de "Yükle" onayı ve iPhone\'da ana ekrandan ilk açılış. İsim, numara ve konum kaydedilmez.</p>';
+  }
+  // Son 14 günün çağrıları, küçük çubuk grafik
+  function gunGrafik(gun) {
+    var g = [], enCok = 1;
+    for (var i = 13; i >= 0; i--) {
+      var t = new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+      g.push([t, gun[t] || 0]); enCok = Math.max(enCok, gun[t] || 0);
+    }
+    return '<div class="sy-grup"><p class="sy-baslik">Son 14 gün, günlük çağrı</p><div class="sy-grafik" role="img" aria-label="Son 14 günün günlük çağrı sayısı">' + g.map(function (x) {
+      return '<span title="' + x[0].slice(8) + "." + x[0].slice(5, 7) + ": " + x[1] + ' çağrı"><i style="height:' + Math.max(3, Math.round(x[1] / enCok * 100)) + '%"></i><small>' + (+x[0].slice(8)) + "</small></span>";
+    }).join("") + "</div></div>";
+  }
+  function raporMetni(ad, r, donemAd) {
+    return ad + " · " + donemAd + " raporu (" + S.marka.ad + ")\n\n" +
+      "Toplam çağrı: " + r.cagri + " (telefon " + r.arama + ", WhatsApp konum " + r.konum + ")\n" +
+      "Meşgulken arkadaşa giden, kaçmayan yolcu: " + r.kurtarilan + "\n" +
+      "Pleksiyi okutan: " + (r.nfc + r.qr) + " (NFC " + r.nfc + ", QR " + r.qr + ")\n" +
+      "Uygulamayı telefonuna kuran yolcu: " + r.kurulum + " (pleksiden " + r.plekKurulum + ")\n" +
+      "Uygulamadan çağıran: " + r.uygArama + "\n" +
+      "Tekrar gelen yolcu: " + r.tekrar + "\n" +
+      "Rehbere kaydeden: " + r.rehber + "\n" +
+      "Google yorumuna yönlenen: " + r.google;
+  }
+
+  // Bir kutunun içine dönem seçici + sayılar çizer. tip: sofor | durak
+  function sayiPaneli(kap, tip, kod, pin, ad, tel) {
+    var donem = ss("taksicim_donem") || "bu-ay";
+    kap.classList.add("sy-kap");
+    function ciz() {
+      var a = donemAraligi(donem);
+      kap.innerHTML = '<div class="cipler" role="group" aria-label="Dönem">' + DONEMLER.map(function (x) { return '<button type="button" data-donem="' + x[0] + '" aria-pressed="' + (x[0] === donem) + '">' + x[1] + "</button>"; }).join("") + '</div><p class="sy-yukleniyor">Sayılar geliyor…</p>';
+      kap.querySelectorAll("[data-donem]").forEach(function (b) { b.addEventListener("click", function () { donem = b.dataset.donem; ss("taksicim_donem", donem); ciz(); }); });
+      Depo.olaylar(tip, kod, pin, a.bas).then(function (ol) {
+        ol = (ol || []).filter(function (o) { return !a.bit || o.zaman < a.bit; });
+        var r = sayilar(ol, olayKodlari(tip, kod));
+        var y = kap.querySelector(".sy-yukleniyor");
+        if (!y) return;
+        y.outerHTML = ornekUyari() + sayiKutulari(r, tip) +
+          '<a class="btn btn-wa btn-blok" target="_blank" rel="noopener" href="https://wa.me/' + (tel ? waNo(tel) : "") + "?text=" + encodeURIComponent(raporMetni(ad, r, a.ad)) + '">' + ik("wa") + "Raporu WhatsApp'tan gönder</a>";
+      });
+    }
+    ciz();
+  }
+  function ornekUyari() {
+    return (ls("taksicim_ornek") || []).length ? '<p class="sy-ornek">' + ik("uyari") + "Ekrandaki sayıların çoğu örnek veridir, gerçek değildir. Sunumda böyle görüneceğini göstermek için.</p>" : "";
+  }
+
+  // Demo: sunumda panel boş görünmesin diye açıkça "örnek" yazan veri üretir. Gerçek sitede (Supabase) bu yoktur.
+  function ornekVeriUret() {
+    var l = [], tohum = 7;
+    var rnd = function () { tohum = (tohum * 9301 + 49297) % 233280; return tohum / 233280; };
+    var sayfalar = S.soforler.map(function (s) { return s.kod; }).concat(S.duraklar.map(function (d) { return "d:" + d.kod; }));
+    var cihazlar = [];
+    for (var c = 0; c < 260; c++) cihazlar.push("ornek" + c);
+    for (var g = 45; g >= 0; g--) {
+      sayfalar.forEach(function (k) {
+        var dk = k.indexOf("d:") === 0, n = Math.round(rnd() * (dk ? 5 : 4));
+        for (var i = 0; i < n; i++) {
+          var z = Date.now() - g * 864e5 - Math.round(rnd() * 864e5 * 0.9);
+          if (z > Date.now()) z = Date.now() - 60000;
+          var r1 = rnd(), kaynak = dk ? (r1 < 0.6 ? "link" : "uygulama") : r1 < 0.32 ? "nfc" : r1 < 0.55 ? "qr" : r1 < 0.8 ? "uygulama" : "link";
+          var cihaz = cihazlar[Math.floor(rnd() * cihazlar.length)];
+          var ekle = function (tur, hedef) { l.push({ kod: k, tur: tur, hedef: hedef || null, kaynak: kaynak, cihaz: cihaz, zaman: z, ornek: 1 }); };
+          ekle("ziyaret");
+          var s = sofor(k), r2 = rnd();
+          var hedef = s ? (yedekleri(s)[0] || s).kod : S.soforler.filter(function (x) { return x.durak === k.slice(2); })[0];
+          hedef = typeof hedef === "string" ? hedef : hedef ? hedef.kod : null;
+          if (r2 < 0.42) ekle("arama", s ? k : hedef);
+          else if (r2 < 0.55) ekle("konum", s ? k : hedef);
+          else if (r2 < 0.63 && s) ekle("yonlendirme", hedef);
+          if (s && kaynak !== "uygulama" && rnd() < 0.09) ekle("kurulum", kaynak);
+          if (s && rnd() < 0.05) ekle("rehber");
+          if (rnd() < 0.05) ekle("google");
+          if (s && rnd() < 0.02) ekle("paylas");
+        }
+      });
+    }
+    ls("taksicim_ornek", l);
+  }
+
+  // ======================================================
+  // RAPOR: bütün müşteriler (sadece biz görürüz)
+  // ======================================================
+  function sayfaRapor() {
+    var giris = ls("taksicim_rapor");
+    document.title = "Rapor · " + S.marka.ad;
+    var h = '<div class="pn kap" style="max-width:1080px">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><a class="logo" href="' + link("tanitim") + '"><span class="lamba">TAKSİ</span>' + esc(S.marka.ad) + "</a>" +
+      (giris ? '<button class="btn btn-hayalet" style="min-height:40px;font-size:14px" data-cikis>Çıkış</button>' : "") + "</div>";
+    if (!giris) {
+      h += '<h1 style="margin-top:22px">Rapor</h1><p style="color:var(--soluk);margin-top:6px">Bütün duraklar ve şoförler tek ekranda: kim pleksiyi okuttu, kim uygulamayı kurdu, kim aradı. Bu sayfa sadece bizim için.</p>' +
+        '<form class="kutu" id="rp-form" style="max-width:480px"><label for="rp-pin">Yönetici PIN<input id="rp-pin" inputmode="numeric" maxlength="8" placeholder="PIN"' + (SUPA ? "" : ' value="1234"') + "></label>" +
+        (SUPA ? "" : '<p style="color:var(--soluk);font-size:14px">Demo PIN: <span class="kod">1234</span></p>') +
+        '<p id="rp-hata" style="color:var(--kirmizi);font-size:14px" hidden></p><button class="btn btn-sari btn-blok" type="submit">Giriş yap</button></form></div>';
+      app.innerHTML = h;
+      document.getElementById("rp-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var pin = document.getElementById("rp-pin").value.trim();
+        Depo.olaylar("hepsi", null, pin, Date.now()).then(function (ol) {
+          if (ol === null) { var he = document.getElementById("rp-hata"); he.textContent = "PIN yanlış."; he.hidden = false; return; }
+          ls("taksicim_rapor", { pin: pin });
+          sayfaRapor();
+        });
+      });
+      return;
+    }
+    var donem = ss("taksicim_donem") || "bu-ay";
+    var a = donemAraligi(donem);
+    h += '<h1 style="margin-top:22px">Rapor</h1><div class="cipler" role="group" aria-label="Dönem" style="margin-top:12px">' + DONEMLER.map(function (x) { return '<button type="button" data-donem="' + x[0] + '" aria-pressed="' + (x[0] === donem) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    h += '<div id="rp-icerik"><p class="sy-yukleniyor" style="margin-top:18px">Sayılar geliyor…</p></div>';
+    if (!SUPA) h += '<div class="kutu"><p style="font-weight:700">Sunum için örnek veri</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Demo sitede gerçek yolcu yok. Panelin dolu hali nasıl görünür, göstermek için 45 günlük örnek veri yükleyebilirsin. Ekranda "örnek veri" uyarısı çıkar. Gerçek sitede bu düğme yoktur.</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button class="btn btn-sari" data-ornek>Örnek veriyle doldur</button><button class="btn btn-hayalet" data-ornek-sil>Örnek veriyi sil</button></div></div>';
+    h += "</div>";
+    app.innerHTML = h;
+    app.querySelectorAll("[data-donem]").forEach(function (b) { b.addEventListener("click", function () { ss("taksicim_donem", b.dataset.donem); sayfaRapor(); }); });
+    var c = app.querySelector("[data-cikis]");
+    if (c) c.addEventListener("click", function () { ls("taksicim_rapor", null); sayfaRapor(); });
+    var o1 = app.querySelector("[data-ornek]"), o2 = app.querySelector("[data-ornek-sil]");
+    if (o1) o1.addEventListener("click", function () { ornekVeriUret(); sayfaRapor(); bildir("Örnek veri yüklendi."); });
+    if (o2) o2.addEventListener("click", function () { ls("taksicim_ornek", null); sayfaRapor(); bildir("Örnek veri silindi."); });
+
+    Depo.olaylar("hepsi", null, giris.pin, a.bas).then(function (ol) {
+      if (ol === null) { ls("taksicim_rapor", null); return sayfaRapor(); }
+      ol = ol.filter(function (o) { return !a.bit || o.zaman < a.bit; });
+      var top = sayilar(ol, null);
+      var musteriler = S.duraklar.map(function (d) {
+        var n = S.soforler.filter(function (s) { return s.durak === d.kod; }).length;
+        return { ad: d.ad, alt: "Durak · " + n + " araç", tel: d.whatsapp || d.telefon, tip: "durak", kod: d.kod, demo: d.demo, r: sayilar(ol, olayKodlari("durak", d.kod)) };
+      }).concat(S.soforler.filter(function (s) { return !s.durak; }).map(function (s) {
+        return { ad: s.ad, alt: "Tek şoför · " + s.plaka, tel: s.telefon, tip: "sofor", kod: s.kod, demo: s.demo, r: sayilar(ol, olayKodlari("sofor", s.kod)) };
+      }));
+      musteriler.sort(function (x, y) { return y.r.cagri - x.r.cagri; });
+      var arac = S.soforler.length;
+      var satis = S.marka.sehir + "'da " + arac + " taksi " + S.marka.ad + " kullanıyor. " + a.ad.charAt(0).toUpperCase() + a.ad.slice(1) + ": " + top.cagri + " çağrı, " + (top.nfc + top.qr) + " pleksi okutma, " + top.kurulum + " yolcu uygulamayı telefonuna kurdu, " + top.kurtarilan + " yolcu şoför meşgulken kaçmadı, arkadaşına gitti.";
+      var h2 = ornekUyari();
+      h2 += '<div class="ozet"><div><b>' + top.cagri + "</b><small>Toplam çağrı</small></div><div><b>" + (top.nfc + top.qr) + "</b><small>Pleksi okutma</small></div><div><b>" + top.kurulum + "</b><small>Uygulamayı kuran</small></div><div><b>" + top.kurtarilan + "</b><small>Kaçmayan yolcu</small></div></div>";
+      h2 += '<div class="kutu"><p style="font-weight:700">Bütün müşteriler, ' + esc(a.ad) + "</p>" + sayiKutulari(top, "hepsi") + "</div>";
+      h2 += '<div class="kutu"><p style="font-weight:700">Satışta söylenecek cümle</p><div class="mesaj" id="rp-satis">' + esc(satis) + '</div><button class="btn btn-hayalet" data-kopyala>Kopyala</button></div>';
+      h2 += '<h2 style="font-size:28px;margin:26px 0 10px">Müşteriler</h2><div class="rp-liste">' + musteriler.map(function (m, i) {
+        return '<div class="rp-kart"><div class="rp-ust"><div><b>' + esc(m.ad) + "</b><small>" + esc(m.alt) + (m.demo ? " · demo" : "") + '</small></div><a class="btn btn-hayalet" style="min-height:38px;padding:0 12px;font-size:14px" href="' + link(m.tip === "durak" ? "durak" : "sofor", m.kod) + '">Siteyi aç</a></div>' +
+          '<div class="rp-dort"><div><b>' + m.r.cagri + "</b><small>Çağrı</small></div><div><b>" + (m.r.nfc + m.r.qr) + "</b><small>Pleksi okutma</small></div><div><b>" + m.r.kurulum + "</b><small>Uygulama kuran</small></div><div><b>" + m.r.kurtarilan + "</b><small>Kaçmayan yolcu</small></div></div>" +
+          '<details><summary>Bütün sayılar</summary><div class="sy-kap">' + sayiKutulari(m.r, m.tip) + "</div></details>" +
+          '<a class="btn btn-wa btn-blok" target="_blank" rel="noopener" href="https://wa.me/' + waNo(m.tel) + "?text=" + encodeURIComponent(raporMetni(m.ad, m.r, a.ad)) + '">' + ik("wa") + "Raporu " + esc(m.ad) + "'ya gönder</a></div>";
+      }).join("") + "</div>";
+      var ic = document.getElementById("rp-icerik");
+      if (!ic) return;
+      ic.innerHTML = h2;
+      var k = ic.querySelector("[data-kopyala]");
+      if (k) k.addEventListener("click", function () {
+        (navigator.clipboard ? navigator.clipboard.writeText(satis) : Promise.reject()).then(function () { bildir("Kopyalandı."); }, function () { bildir("Kopyalanamadı, elle seç."); });
+      });
     });
   }
 
@@ -973,10 +1243,10 @@
       : kod ? [sofor(kod)].filter(Boolean) : S.soforler;
     document.title = "Etiketler · " + S.marka.ad;
     var h = '<div class="et-sayfa kap"><div class="yazdirma-yok" style="display:grid;gap:10px;margin-bottom:20px"><a class="logo" href="' + link("tanitim") + '"><span class="lamba">TAKSİ</span>' + esc(S.marka.ad) + "</a>" +
-      '<h1 style="font-size:40px;text-transform:uppercase">Araç etiketleri</h1><p style="color:var(--soluk);max-width:40em">Her araca 3 etiket: arka sol, arka sağ ve ön. Üçü de aynı linke gider. A4\'e gerçek boyutta (10x10 cm) basılır. NFC çipine de aynı link yazılır: <span class="kod">' + esc(hedef[0] ? tamLink(hedef[0]) : "") + "</span></p>" +
+      '<h1 style="font-size:40px;text-transform:uppercase">Araç etiketleri</h1><p style="color:var(--soluk);max-width:40em">Her araca 3 etiket: arka sol, arka sağ ve ön. Üçü de aynı linke gider. A4\'e gerçek boyutta (10x10 cm) basılır. NFC çipine şu link yazılır (sondaki ?k=n okutmaları saymak için): <span class="kod">' + esc(hedef[0] ? tamLink(hedef[0]) + "?k=n" : "") + "</span></p>" +
       (HASH ? "" : '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-sari" onclick="window.print()">Yazdır</button>' + (kod ? '<a class="btn btn-hayalet" href="./">Bütün şoförler</a>' : "") + "</div>") + "</div>";
     hedef.forEach(function (s) {
-      h += '<h2 class="yazdirma-yok" style="font-size:24px;margin:18px 0 10px">' + esc(s.ad) + ' <span class="kod" style="font-size:13px">' + esc(tamLink(s)) + '</span></h2><div class="et-izgara">' +
+      h += '<h2 class="yazdirma-yok" style="font-size:24px;margin:18px 0 10px">' + esc(s.ad) + ' <span class="kod" style="font-size:13px">' + esc(tamLink(s) + "?k=n") + '</span></h2><div class="et-izgara">' +
         etiketHtml(s, "Arka sol") + etiketHtml(s, "Arka sağ") + etiketHtml(s, "Ön") + "</div>";
     });
     h += '<h2 class="yazdirma-yok" style="font-size:24px;margin:26px 0 6px">Gösterge paneli etiketleri</h2><p class="yazdirma-yok" style="color:var(--soluk);max-width:40em;margin-bottom:10px">Her şoföre aynı iki etiket. Şoför telefonunu dokundurunca durumu değişir. NFC çipine yazılacak linkler: <span class="kod">' + esc(S.marka.siteUrl.replace(/\/$/, "") + "/panel/#dolu") + '</span> ve <span class="kod">' + esc(S.marka.siteUrl.replace(/\/$/, "") + "/panel/#bos") + "</span></p>" +
@@ -1126,7 +1396,7 @@
       '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:22px"><a class="btn btn-wa" href="https://wa.me/' + waNo(M.iletisimTelefon) + "?text=" + encodeURIComponent("Merhaba, taksi sayfası hakkında bilgi almak istiyorum.") + '" target="_blank" rel="noopener">' + ik("wa") + "WhatsApp'tan yaz</a>" +
       '<span class="btn btn-hayalet" style="user-select:all">' + ik("tel") + esc(telGoster(M.iletisimTelefon)) + "</span></div></div></section>";
 
-    h += '<footer class="tn-alt"><div class="dama" aria-hidden="true" style="margin-bottom:28px"></div><div class="kap"><p>© ' + new Date().getFullYear() + " " + esc(M.ad) + " · " + esc(M.gelistirici) + " · " + esc(M.iletisimEposta) + '</p><p><a href="' + link("panel") + '" style="color:var(--sari-metin)">Şoför girişi</a></p></div></footer>';
+    h += '<footer class="tn-alt"><div class="dama" aria-hidden="true" style="margin-bottom:28px"></div><div class="kap"><p>© ' + new Date().getFullYear() + " " + esc(M.ad) + " · " + esc(M.gelistirici) + " · " + esc(M.iletisimEposta) + '</p><p><a href="' + link("panel") + '" style="color:var(--sari-metin)">Şoför girişi</a> · <a href="' + link("rapor") + '" style="color:var(--soluk)">Rapor</a></p></div></footer>';
     app.innerHTML = h;
   }
 
@@ -1153,6 +1423,7 @@
       else if (hs.indexOf("panel") === 0) { v = "panel"; k = hs.slice(6) || null; }
       else if (hs.indexOf("etiket") === 0) { v = "etiket"; k = hs.slice(7) || null; }
       else if (hs === "tanitim") v = "tanitim";
+      else if (hs === "rapor") v = "rapor";
       else return; // sayfa içi bağlantı (#iletisim gibi)
     } else {
       v = P.view; k = P.kod || (v === "panel" || v === "etiket" ? location.hash.replace(/^#/, "") || null : null);
@@ -1163,6 +1434,7 @@
     else if (v === "yonetim") sayfaYonetim(k);
     else if (v === "panel") sayfaPanel(k);
     else if (v === "etiket") sayfaEtiket(k);
+    else if (v === "rapor") sayfaRapor();
     else if (v === "yok") bulunamadi();
     else sayfaTanitim();
     if (HASH) window.scrollTo(0, 0);

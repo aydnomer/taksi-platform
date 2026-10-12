@@ -312,7 +312,7 @@ p { margin: 0; }
 .pencere .tutac { width: 42px; height: 5px; border-radius: 3px; background: var(--cizgi); margin: 0 auto 14px; }
 .pencere h3 { font-size: 28px; margin-bottom: 8px; }
 .pencere .ic { display: grid; gap: 12px; }
-.pencere .mesaj {
+.pencere .mesaj, .pn .mesaj {
   background: var(--yuzey-2);
   border-radius: 14px;
   padding: 12px 14px;
@@ -756,3 +756,38 @@ details.sss p { color: var(--soluk); padding-bottom: 16px; }
 /* telefonda açılış butonları tam genişlik, alt çubuk tek satır */
 .dk-hero .eylemler .btn { flex: 1 1 220px; }
 .yapiskan .btn { white-space: nowrap; }
+
+/* ---------- sayılar (şoför, durak paneli ve rapor) ---------- */
+.sy-kap { display: grid; gap: 14px; }
+.sy-grup { display: grid; gap: 8px; }
+.sy-baslik { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--soluk); }
+.sy-izgara { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sy { background: var(--yuzey-2); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.sy b { display: block; font: 700 30px/1 var(--f-baslik); font-variant-numeric: tabular-nums; }
+.sy small { display: block; color: var(--soluk); font-size: 13px; line-height: 1.3; margin-top: 4px; }
+.sy-not { color: var(--soluk); font-size: 12.5px; line-height: 1.45; }
+.sy-yukleniyor { color: var(--soluk); font-size: 14px; }
+.sy-ornek { display: flex; gap: 8px; align-items: flex-start; background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--metin); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-weight: 600; }
+#rp-icerik { display: grid; gap: 14px; margin-top: 14px; }
+#rp-icerik > .ozet, #rp-icerik > .kutu { margin-top: 0; }
+.sy-ornek svg { width: 18px; height: 18px; flex: none; color: var(--amber); margin-top: 1px; }
+.sy-grafik { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; align-items: end; height: 110px; background: var(--yuzey-2); border-radius: 14px; padding: 12px 10px 6px; }
+.sy-grafik span { display: grid; grid-template-rows: 1fr auto; height: 100%; gap: 4px; min-width: 0; }
+.sy-grafik i { align-self: end; display: block; background: var(--sari); border-radius: 4px 4px 2px 2px; min-height: 3px; }
+.sy-grafik small { font-size: 10px; color: var(--soluk); text-align: center; }
+.rp-liste { display: grid; gap: 12px; }
+.rp-kart { background: var(--yuzey); border-radius: 20px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.rp-ust { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.rp-ust b { display: block; font: 700 22px/1.1 var(--f-baslik); text-transform: uppercase; }
+.rp-ust small { color: var(--soluk); font-size: 13px; }
+.rp-dort { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rp-dort > div { background: var(--yuzey-2); border-radius: 12px; padding: 10px 12px; }
+.rp-dort b { display: block; font: 700 26px/1 var(--f-baslik); font-variant-numeric: tabular-nums; }
+.rp-dort small { color: var(--soluk); font-size: 12.5px; }
+.rp-kart summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--sari-metin); min-height: 32px; display: flex; align-items: center; }
+.rp-kart details[open] summary { margin-bottom: 10px; }
+@media (min-width: 720px) {
+  .sy-izgara { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rp-dort { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rp-liste { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

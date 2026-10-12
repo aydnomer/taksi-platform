@@ -14,6 +14,7 @@ Elazığ'daki taksicilere ve duraklara satılan web platformu. Tek site, tek ala
 | `/t/<şoför-kodu>/` | Şoförün sayfası. Pleksideki NFC ve QR buraya gider. Ana ekrana eklenince şoförün adıyla uygulama olur |
 | `/panel/` | Şoför paneli: Müsaitim / Yolcudayım / Hizmet dışı, anlaşmalı şoför sırası, aylık sayılar |
 | `/etiket/` | 10x10 cm pleksi baskısı (her araca 3 tane: arka sol, arka sağ, ön) |
+| `/rapor/` | Sadece bizim için: bütün müşterilerin sayıları, satışta söylenecek cümle, müşteriye WhatsApp'tan rapor |
 
 Demo: `/t/ahmet/` (Ahmet yolcuda, çağrı Mehmet'e yönleniyor), `/d/ornek-durak/` (sarı), `/d/kale-taksi/` (turuncu), `/t/kemal/` (tek şoför), `/panel/` ve `/d/ornek-durak/yonetim/` (demo PIN `1234`).
 
@@ -56,6 +57,26 @@ Android'de Chrome kendi "Yükle" penceresini açar, sayfadaki **Ana ekrana** but
 - **Tek dokunuşla yedek: Rehbere kaydet.** iPhone kişi kartını direkt açar, yolcu sadece "Kaydet"e basar. İçinde şoförün ve durağın numarası, bir de sayfanın linki olur. iPhone'da en garantili "kalıcı buton" budur.
 - Ana ekrana eklenen simgenin adı şoförün adıdır ("Ahmet Taksi"), çünkü her şoförün kendi uygulama dosyası (manifest) var.
 
+## Sayılar ve rapor
+
+Her ziyaret ve buton kaydedilir, üç yerde gösterilir:
+
+| Kim | Nerede | Ne görür |
+|---|---|---|
+| Şoför | `/panel/` | Sadece kendi sayıları |
+| Durak başkanı | `/d/<kod>/yonetim/` | Durağın bütün araçlarının toplamı ve araç başı çağrı |
+| Biz | `/rapor/` (yönetici PIN'i) | Bütün müşteriler, karşılaştırma, satış cümlesi, her müşteriye "Raporu WhatsApp'tan gönder" |
+
+Sayılanlar: pleksi okutma (NFC ve QR ayrı), pleksiden uygulamayı kuran, pleksiden çağıran, pleksiden Google yorumuna giden, uygulamayı kuran, uygulamadan açılış ve çağrı, tekrar gelen yolcu, telefonla arama, WhatsApp konum, meşgulken arkadaşa giden (kaçmayan yolcu), başka sayfalardan gelen, sayfa açılışı, farklı telefon, rehbere kaydeden, ailesine yolculuk gönderen, kayıp eşya bildirimi.
+
+**Nereden geldi nasıl anlaşılıyor:** QR kodun içinde `?k=q`, NFC çipine yazılan linkte `?k=n` var (`/t/ahmet/?k=n`). Ana ekrandaki uygulamadan açılırsa "uygulama" sayılır. Pleksi basmadan önce NFC çipine `?k=n`'li link yazılmalı, yoksa NFC okutmaları "link" görünür.
+
+**Dürüst sınırlar:** Google'a giden = butona basan; yorumu yazıp yazmadığını Google söylemez. WhatsApp = mesaj ekranı açılan; gönder'e basıp basmadığı görülmez. iPhone'da ana ekrana eklenen uygulama ayrı bir tarayıcı gibi çalışır, bu yüzden iPhone kurulumu ilk açılışta sayılır ve "pleksiden mi kurdu" bilgisi iPhone'da eksik kalabilir.
+
+**Kişisel veri:** İsim, numara, konum yok. Her telefona rastgele bir sayı verilir ("farklı telefon" ve "tekrar gelen" bununla hesaplanır). Sayılar dışarıya kapalıdır, sadece PIN'le okunur.
+
+**Demo:** Supabase yokken `/rapor/` PIN `1234`. "Örnek veriyle doldur" 45 günlük örnek veri yükler, ekranda "örnek veri" uyarısı çıkar. Gerçek sitede bu düğme yoktur.
+
 ## Yeni durak ya da şoför ekleme
 
 Her şey `data/site.json` dosyasında:
@@ -78,7 +99,8 @@ Supabase ayarı boşken site **demo modunda** çalışır: durum sadece o telefo
 1. supabase.com'da ücretsiz proje aç.
 2. SQL Editor'e `supabase/kurulum.sql` dosyasını yapıştır, çalıştır.
 3. Her şoför için dosyanın sonundaki örnekle kod ve **6 haneli** PIN ekle.
-4. `data/site.json` → `ayarlar.supabaseUrl` ve `ayarlar.supabaseAnonKey` doldur.
+4. Rapor için dosyanın sonundaki örnekle uzun bir **yönetici PIN'i** ekle.
+5. `data/site.json` → `ayarlar.supabaseUrl` ve `ayarlar.supabaseAnonKey` doldur.
 
 İnternet ya da Supabase çökerse sayfa yine açılır, şoför yine aranır; sadece müsaitlik "bilinmiyor" görünür. Ücretsiz Supabase projesi 1 hafta hiç kullanılmazsa uyur; gerçek müşteride bunu ücretli plana geçmek ya da haftalık bir ping ile önlemek gerekir.
 
@@ -99,4 +121,4 @@ npm run onizleme   # onizleme/onizleme.html: tek dosyalık demo
 
 ## Kişisel veri
 
-Yolcunun konumu sadece kendi WhatsApp'ından şoföre mesaj olarak gider, sunucuya yazılmaz. Sayaç tablosunda isim, numara ya da konum yoktur; sadece "şu sayfada şu butona basıldı" kaydı tutulur.
+Yolcunun konumu sadece kendi WhatsApp'ından şoföre mesaj olarak gider, sunucuya yazılmaz. Sayaç tablosunda isim, numara ya da konum yoktur; sadece "şu sayfada şu butona basıldı, şuradan geldi" kaydı ve telefona özel rastgele bir sayı tutulur. Sayılar sadece PIN'le okunur.
