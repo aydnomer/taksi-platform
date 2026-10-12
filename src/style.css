@@ -583,7 +583,7 @@ details.sss p { color: var(--soluk); padding-bottom: 16px; }
 .yedek-satir .ad small { display: block; color: var(--soluk); font-size: 12px; }
 .yedek-satir button { width: 38px; height: 38px; border-radius: 10px; border: 0; background: var(--yuzey); cursor: pointer; display: grid; place-items: center; }
 .yedek-satir button svg { width: 18px; height: 18px; }
-.kod { font-family: ui-monospace, "SF Mono", Menlo, monospace; background: var(--yuzey-2); padding: 2px 7px; border-radius: 6px; font-size: 14px; white-space: nowrap; }
+.kod { font-family: ui-monospace, "SF Mono", Menlo, monospace; background: var(--yuzey-2); padding: 2px 7px; border-radius: 6px; font-size: 14px; overflow-wrap: anywhere; }
 .tablo-kap { overflow-x: auto; }
 .tablo { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tablo td { padding: 9px 6px; border-top: 1px solid var(--cizgi); vertical-align: top; }
@@ -596,7 +596,9 @@ details.sss p { color: var(--soluk); padding-bottom: 16px; }
 .et .ust { display: flex; justify-content: space-between; align-items: center; font: 700 9mm/1 var(--f-baslik); text-transform: uppercase; }
 .et .ust small { font: 600 3.4mm/1 var(--f-govde); text-transform: none; }
 .et .orta { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; align-items: center; }
-.et .qr { background: #fff; border-radius: 3mm; padding: 2mm; }
+.et .qr { background: #fff; border-radius: 3mm; padding: 2mm; min-width: 0; }
+.et .qr svg { width: 100%; height: auto; display: block; }
+.et .orta > * { min-width: 0; }
 .et .nfc { text-align: center; font: 700 6mm/1.05 var(--f-baslik); text-transform: uppercase; display: grid; justify-items: center; gap: 2mm; }
 .et .nfc svg { width: 18mm; height: 18mm; }
 .et .alt { display: flex; justify-content: space-between; font-size: 3.3mm; font-weight: 600; }
@@ -609,6 +611,18 @@ details.sss p { color: var(--soluk); padding-bottom: 16px; }
   .yazdirma-yok { display: none !important; }
 }
 
+
+/* Gösterge paneli NFC dokunuşu sonrası tam ekran onay */
+.hizli { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: var(--zemin); }
+.hizli-ic { max-width: 420px; display: grid; gap: 14px; justify-items: center; text-align: center; }
+.hizli-nokta { width: 120px; height: 120px; border-radius: 50%; background: var(--renk); box-shadow: 0 0 0 14px color-mix(in srgb, var(--renk) 22%, transparent); }
+.hizli h1 { font-size: 64px; text-transform: uppercase; color: var(--renk); margin-top: 12px; }
+.hizli p { color: var(--soluk); font-size: 18px; }
+.et-kucuk { width: 50mm; height: 50mm; border-radius: 4mm; color: #111; padding: 4mm; display: grid; grid-template-columns: 1fr auto; grid-template-rows: 1fr auto; gap: 2mm; break-inside: avoid; }
+.et-kucuk .qr { background: #fff; border-radius: 2mm; padding: 1.5mm; width: 26mm; height: 26mm; }
+.et-kucuk .qr svg { width: 100%; height: 100%; display: block; }
+.et-kucuk b { grid-column: 1 / -1; font: 700 7mm/1 var(--f-baslik); text-transform: uppercase; }
+.et-kucuk > svg { width: 12mm; height: 12mm; }
 
 /* iPhone ana ekrana ekle rehberi */
 .ios-adim { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }

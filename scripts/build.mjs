@@ -22,7 +22,11 @@ for (const s of SITE.soforler) {
     type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" }
   });
 }
-const VERI = "window.SITE=" + JSON.stringify({ ...SITE, qr }) + ";";
+const qrPanel = {};
+for (const k of ["dolu", "bos"]) {
+  qrPanel[k] = await QRCode.toString(`${siteUrl}/panel/#${k}`, { type: "svg", margin: 0, errorCorrectionLevel: "M", color: { dark: "#111111", light: "#ffffff" } });
+}
+const VERI = "window.SITE=" + JSON.stringify({ ...SITE, qr, qrPanel }) + ";";
 const surum = createHash("sha1").update(CSS + JS + VERI).digest("hex").slice(0, 8);
 const FONT = "https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Figtree:wght@400;500;600;700&display=swap";
 

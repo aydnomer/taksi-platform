@@ -192,7 +192,9 @@
     if (!d || !d.zaman || Date.now() - d.zaman > saat * 3600 * 1000) return { durum: "bilinmiyor" };
     var kalan = null;
     if (d.durum === "yolcuda" && d.donusDk) {
-      kalan = Math.max(1, Math.round(d.donusDk - (Date.now() - d.zaman) / 60000));
+      kalan = Math.round(d.donusDk - (Date.now() - d.zaman) / 60000);
+      // Süre dolunca şoför bir şeye basmasa da kendiliğinden müsait olur
+      if (kalan <= 0) return { durum: "musait", otomatik: true };
     }
     return { durum: d.durum, kalan: kalan };
   }
@@ -614,10 +616,36 @@
   // ======================================================
   // ŞOFÖR PANELİ
   // ======================================================
+  // Gösterge paneline yapışan NFC etiketleri: telefonu dokundur, durum değişsin. Uygulama açmak, PIN yazmak yok.
+  var HIZLI = { dolu: 1, bos: 1, degistir: 1 };
+  var HIZLI_DK = 25;
+  var bekleyenHizli = null;
+  function hizliIslem(s, giris, islem) {
+    var su = durumu(s.kod).durum;
+    var yeni = islem === "dolu" ? "yolcuda" : islem === "bos" ? "musait" : (su === "yolcuda" ? "musait" : "yolcuda");
+    Depo.guncelle(s.kod, giris.pin, yeni, yeni === "yolcuda" ? HIZLI_DK : null, null).then(function () {
+      var sec = hedefSec(s);
+      var renk = yeni === "musait" ? "var(--yesil)" : "var(--amber)";
+      app.innerHTML = '<div class="hizli" style="--renk:' + renk + '"><div class="hizli-ic"><span class="hizli-nokta"></span>' +
+        "<h1>" + (yeni === "musait" ? "Müsaitsin" : "Yolcudasın") + "</h1><p>" +
+        (yeni === "musait" ? "Çağrılar artık sana geliyor."
+          : (sec.hedef ? "Çağrılar " + esc(sec.hedef.hitap || sec.hedef.ad) + "'ye gidiyor. " : "Arkadaşların da meşgul, yolcuya durak numarası gösteriliyor. ") + HIZLI_DK + " dakika sonra kendiliğinden müsait olursun.") +
+        '</p><a class="btn btn-hayalet" href="' + link("panel") + '" data-panele>Panele git</a></div></div>';
+      if (navigator.vibrate) navigator.vibrate(yeni === "musait" ? 60 : [60, 80, 60]);
+      var pg = app.querySelector("[data-panele]");
+      if (pg && HASH) pg.addEventListener("click", function (e) { e.preventDefault(); location.hash = "#panel"; });
+      if (!HASH && history.replaceState) history.replaceState(null, "", location.pathname);
+    }).catch(function (err) { bildir(err.message || "Kaydedilemedi. İnternetini kontrol et."); });
+  }
+
   function sayfaPanel(kod) {
-    var giris = ss("taksicim_giris");
+    var giris = ls("taksicim_giris");
     var s = giris ? sofor(giris.kod) : null;
     document.title = "Şoför Paneli · " + S.marka.ad;
+    if (kod && HIZLI[kod]) {
+      if (s) return hizliIslem(s, giris, kod);
+      bekleyenHizli = kod; kod = null;
+    }
     var h = '<div class="pn uyg">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><a class="logo" href="' + link("tanitim") + '"><span class="lamba">TAKSİ</span>' + esc(S.marka.ad) + "</a>" +
       (s ? '<button class="btn btn-hayalet" style="min-height:40px;font-size:14px" data-cikis>Çıkış</button>' : "") + "</div>";
@@ -637,8 +665,9 @@
         var k = document.getElementById("pn-sofor").value, pin = document.getElementById("pn-pin").value.trim();
         Depo.pinDogru(k, pin).then(function (ok) {
           if (!ok) { var he = document.getElementById("pn-hata"); he.textContent = "PIN yanlış. Tekrar dene."; he.hidden = false; return; }
-          ss("taksicim_giris", { kod: k, pin: pin });
-          sayfaPanel();
+          ls("taksicim_giris", { kod: k, pin: pin });
+          var b = bekleyenHizli; bekleyenHizli = null;
+          sayfaPanel(b);
         });
       });
       return;
@@ -674,6 +703,9 @@
           '<tr><td><span class="kod">##002#</span></td><td>Bütün yönlendirmeleri kapat</td></tr>';
       })() +
       '</tbody></table></div><p style="color:var(--soluk);font-size:13px">Numara listedeki ilk arkadaşınındır. Kodlar Turkcell, Vodafone ve Türk Telekom\'da genelde çalışır, ilk kurulumda bir kere deneyerek kontrol et.</p></div>';
+
+    h += '<div class="kutu"><p style="font-weight:700">Uygulamayı hiç açma</p><p style="color:var(--soluk);font-size:14px;margin-top:-6px">Gösterge paneline iki küçük NFC etiketi yapıştırırız. Yolcu binince telefonunu <b style="color:var(--amber)">YOLCU ALDIM</b> etiketine dokundurursun, o kadar. ' + HIZLI_DK + ' dakika sonra kendiliğinden müsait olursun. Erken boşalırsan <b style="color:var(--yesil)">BOŞALDIM</b> etiketine dokundur. Bu telefonda giriş açık kaldığı sürece PIN sorulmaz.</p>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><a class="btn" style="background:var(--amber);color:#111" href="' + link("panel", "dolu") + '">Yolcu aldım</a><a class="btn" style="background:var(--yesil);color:#06210f" href="' + link("panel", "bos") + '">Boşaldım</a></div><p style="color:var(--soluk);font-size:13px">Bu iki buton etikete dokunmanın aynısıdır, deneyebilirsin.</p></div>';
 
     h += '<div class="kutu" style="grid-template-columns:1fr 1fr"><a class="btn btn-hayalet" href="' + link("sofor", s.kod) + '">Sayfamı aç</a><a class="btn btn-hayalet" href="' + (HASH ? "#etiket-" + s.kod : link("etiket") + "#" + s.kod) + '">Etiketlerim</a></div>';
     h += "</div>";
@@ -729,7 +761,7 @@
       }).catch(function (err) { bildir(err.message || "Kaydedilemedi. İnternetini kontrol et."); });
     });
     var c = app.querySelector("[data-cikis]");
-    if (c) c.addEventListener("click", function () { ss("taksicim_giris", null); sayfaPanel(); });
+    if (c) c.addEventListener("click", function () { ls("taksicim_giris", null); sayfaPanel(); });
 
     Depo.olaylar(s.kod).then(function (ol) {
       var ay = new Date(); ay.setDate(1); ay.setHours(0, 0, 0, 0);
@@ -760,6 +792,10 @@
       h += '<h2 class="yazdirma-yok" style="font-size:24px;margin:18px 0 10px">' + esc(s.ad) + ' <span class="kod" style="font-size:13px">' + esc(tamLink(s)) + '</span></h2><div class="et-izgara">' +
         etiketHtml(s, "Arka sol") + etiketHtml(s, "Arka sağ") + etiketHtml(s, "Ön") + "</div>";
     });
+    h += '<h2 class="yazdirma-yok" style="font-size:24px;margin:26px 0 6px">Gösterge paneli etiketleri</h2><p class="yazdirma-yok" style="color:var(--soluk);max-width:40em;margin-bottom:10px">Her şoföre aynı iki etiket. Şoför telefonunu dokundurunca durumu değişir. NFC çipine yazılacak linkler: <span class="kod">' + esc(S.marka.siteUrl.replace(/\/$/, "") + "/panel/#dolu") + '</span> ve <span class="kod">' + esc(S.marka.siteUrl.replace(/\/$/, "") + "/panel/#bos") + "</span></p>" +
+      '<div class="et-izgara">' + [["dolu", "Yolcu aldım", "#ffa62b"], ["bos", "Boşaldım", "#2bd47d"]].map(function (x) {
+        return '<div class="et-kucuk" style="background:' + x[2] + '"><div class="qr">' + ((S.qrPanel && S.qrPanel[x[0]]) || "") + "</div><b>" + x[1] + "</b>" + ik("nfc") + "</div>";
+      }).join("") + "</div>";
     h += "</div>";
     app.innerHTML = h;
   }
@@ -909,7 +945,7 @@
   }
 
   Depo.yukle().then(rota);
-  if (HASH) window.addEventListener("hashchange", rota);
+  if (HASH || P.view === "panel") window.addEventListener("hashchange", rota);
 
   // Başka sekmede (panelde) durum değişince sayfa tazelensin; Supabase'de 30 sn'de bir sor.
   window.addEventListener("storage", function (e) {
