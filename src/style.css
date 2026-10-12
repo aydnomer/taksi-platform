@@ -32,6 +32,8 @@
     --soluk: #5d6066;
     --gri: #8b8e93;
     --golge: 0 14px 34px rgba(30, 30, 20, .12);
+    --yesil: #0f9a52;
+    --amber: #c26f00;
     color-scheme: light;
   }
 }
@@ -45,6 +47,8 @@
   --soluk: #5d6066;
   --gri: #8b8e93;
   --golge: 0 14px 34px rgba(30, 30, 20, .12);
+  --yesil: #0f9a52;
+  --amber: #c26f00;
   color-scheme: light;
 }
 

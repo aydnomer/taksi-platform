@@ -247,7 +247,7 @@
     if (ctx.kaynak) Depo.olay(ctx.kaynak.kod, ctx.yonlendi ? "yonlendirme" : "arama", kisi.kod);
     var ad = kisi.hitap || kisi.ad;
     if (demo || HASH) {
-      var y = ctx.kaynak && kisi.kod === ctx.kaynak.kod ? hedefSec(ctx.kaynak, [kisi.kod]) : null;
+      var y = ctx.kaynak ? hedefSec(ctx.kaynak, [kisi.kod]) : null;
       pencere(
         '<p class="etiket-ust">Demo</p><h3>' + esc(ad) + " aranıyor</h3>" +
         "<p>Gerçek sayfada telefon şimdi <b>" + esc(telGoster(kisi.telefon)) + "</b> numarasını arar.</p>" +
