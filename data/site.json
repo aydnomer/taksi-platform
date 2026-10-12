@@ -1,0 +1,87 @@
+{
+  "marka": {
+    "ad": "Taksicim",
+    "slogan": "Yolcun seni bir daha bulsun.",
+    "siteUrl": "https://aydnomer.github.io/taksi-platform",
+    "sehir": "Elazığ",
+    "iletisimTelefon": "+905307652147",
+    "iletisimEposta": "aydnomrfrk@gmail.com",
+    "gelistirici": "Ömer Faruk Aydın"
+  },
+  "ayarlar": {
+    "supabaseUrl": "",
+    "supabaseAnonKey": "",
+    "eskiDurumSaat": 8
+  },
+  "paketler": [
+    {
+      "ad": "Tek Şoför",
+      "kime": "Durakla çalışmayan taksiciler",
+      "fiyat": "850 TL",
+      "not": "İlk yıl dahil",
+      "yenileme": "Sonraki yıllar 400 TL / yıl",
+      "maddeler": [
+        "Sana özel sayfa ve telefonda uygulama",
+        "Araca 3 adet 10x10 cm NFC + QR pleksi",
+        "Tek tuşla WhatsApp konum ile çağırma",
+        "Rehbere kaydet ve Google yorum butonu",
+        "Anlaşmalı şoför yönlendirmesi"
+      ]
+    },
+    {
+      "ad": "Durak Paketi",
+      "kime": "Durağın bütün araçları",
+      "fiyat": "Araç başı 700 TL",
+      "not": "En az 5 araç, ilk yıl dahil",
+      "yenileme": "Sonraki yıllar araç başı 300 TL / yıl",
+      "one": true,
+      "maddeler": [
+        "Durağa ait web sitesi ve tek çağrı butonu",
+        "Her şoföre ayrı sayfa, uygulama ve pleksi",
+        "Meşgul şoförün yolcusu durakta kalır",
+        "Durak yöneticisi için müsaitlik ekranı",
+        "Kurulumu ve güncellemeleri biz yaparız"
+      ]
+    }
+  ],
+  "duraklar": [
+    {
+      "kod": "ornek-durak",
+      "demo": true,
+      "ad": "Yıldız Taksi",
+      "altAd": "Örnek durak · Demo",
+      "telefon": "+905550000000",
+      "whatsapp": "+905550000000",
+      "adres": "Örnek Mahallesi, Gazi Caddesi No: 1, Elazığ Merkez",
+      "konum": { "lat": 38.6748, "lng": 39.2225 },
+      "googleYorum": "https://www.google.com/maps/search/?api=1&query=Elaz%C4%B1%C4%9F+taksi",
+      "acik": "7/24",
+      "hizmetler": [
+        { "ikon": "sehir", "baslik": "Şehir içi", "metin": "Hastane, çarşı, okul ya da eve dönüş. Elazığ'ın her mahallesine." },
+        { "ikon": "ucak", "baslik": "Havalimanı", "metin": "Uçuş saatine göre alım. Bagajın bizden." },
+        { "ikon": "yol", "baslik": "Şehirler arası", "metin": "Malatya, Bingöl, Diyarbakır. Fiyatı önceden konuşuruz." },
+        { "ikon": "ay", "baslik": "Gece", "metin": "Gece yarısı da durakta biri var." }
+      ],
+      "sss": [
+        { "s": "Taksi ne kadar sürede gelir?", "c": "Müsait aracımız size en yakınsa genelde 5-10 dakika. Konumunuzu gönderirseniz süreyi şoför size yazar." },
+        { "s": "Aradığım şoför meşgulse ne olur?", "c": "Sayfa bunu size gösterir ve aynı duraktaki müsait arkadaşına yönlendirir. Beklemek isterseniz yine kendi şoförünüzü arayabilirsiniz." },
+        { "s": "Uygulama indirmem gerekiyor mu?", "c": "Hayır. Sayfayı ana ekrana eklerseniz uygulama gibi açılır. Mağazadan bir şey indirmezsiniz." },
+        { "s": "Konumum kaydediliyor mu?", "c": "Hayır. Konumunuz sadece sizin WhatsApp'ınızdan şoföre mesaj olarak gider. Biz saklamayız." }
+      ]
+    }
+  ],
+  "soforler": [
+    { "kod": "ahmet", "durak": "ornek-durak", "ad": "Ahmet Demir", "hitap": "Ahmet Abi", "telefon": "+905550000001", "plaka": "23 T 1001", "arac": "Fiat Egea · Beyaz", "yil": 14, "yedekler": ["mehmet", "hasan", "kemal"] },
+    { "kod": "mehmet", "durak": "ornek-durak", "ad": "Mehmet Kaya", "hitap": "Mehmet Abi", "telefon": "+905550000002", "plaka": "23 T 1002", "arac": "Toyota Corolla · Beyaz", "yil": 9, "yedekler": ["ahmet", "hasan", "ali"] },
+    { "kod": "hasan", "durak": "ornek-durak", "ad": "Hasan Çelik", "hitap": "Hasan Abi", "telefon": "+905550000003", "plaka": "23 T 1003", "arac": "Renault Megane · Sarı", "yil": 21, "yedekler": ["ali", "ahmet", "mehmet"] },
+    { "kod": "ali", "durak": "ornek-durak", "ad": "Ali Şahin", "hitap": "Ali Abi", "telefon": "+905550000004", "plaka": "23 T 1004", "arac": "Hyundai i20 · Sarı", "yil": 6, "yedekler": ["hasan", "mehmet", "ahmet"] },
+    { "kod": "kemal", "durak": null, "ad": "Kemal Arslan", "hitap": "Kemal Abi", "telefon": "+905550000005", "plaka": "23 T 2005", "arac": "Dacia Duster · Beyaz", "yil": 11, "demo": true, "yedekler": ["ahmet", "mehmet"] }
+  ],
+  "demoDurum": {
+    "ahmet": { "durum": "yolcuda", "donusDk": 20 },
+    "mehmet": { "durum": "musait" },
+    "hasan": { "durum": "musait" },
+    "ali": { "durum": "kapali" },
+    "kemal": { "durum": "musait" }
+  }
+}

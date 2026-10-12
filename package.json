@@ -1,0 +1,15 @@
+{
+  "name": "taksi-platform",
+  "version": "1.0.0",
+  "description": "Taksicilere özel sayfa, uygulama ve NFC/QR platformu",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "onizleme": "node scripts/build.mjs --onizleme",
+    "serve": "npx --yes serve@14.2.4 dist -l 5173"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
+  "private": true,
+  "type": "module"
+}

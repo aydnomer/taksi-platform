@@ -1,0 +1,4 @@
+node_modules/
+dist/
+onizleme/
+.DS_Store
