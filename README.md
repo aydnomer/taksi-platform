@@ -12,7 +12,7 @@ Elazığ'daki taksicilere ve duraklara satılan web platformu. Tek site, tek ala
 | `/d/<durak-kodu>/` | Durağın web sitesi: kaç araç müsait, şoförler, hizmetler, iletişim |
 | `/d/<durak-kodu>/yonetim/` | Durak paneli: bütün araçların durumu, bu ayki çağrılar, durak başkanı şoförün durumunu da değiştirebilir |
 | `/t/<şoför-kodu>/` | Şoförün sayfası. Pleksideki NFC ve QR buraya gider. Ana ekrana eklenince şoförün adıyla uygulama olur |
-| `/panel/` | Şoför paneli: Müsaitim / Yolcudayım / Hizmet dışı, anlaşmalı şoför sırası, aylık sayılar |
+| `/panel/` | Şoför paneli: tek dokunuşla Müsaitim / Yolcudayım / Kapalıyım, anlaşmalı şoför sırası, aylık sayılar. Her şoföre kendi linki: `/panel/#ahmet` |
 | `/etiket/` | 10x10 cm pleksi baskısı (her araca 3 tane: arka sol, arka sağ, ön) |
 | `/rapor/` | Sadece bizim için: bütün müşterilerin sayıları, satışta söylenecek cümle, müşteriye WhatsApp'tan rapor |
 
@@ -91,6 +91,20 @@ Her şey `data/site.json` dosyasında:
 - `yedekler` sırası önemlidir: ilk müsait olan seçilir.
 - Gerçek durakta `"demo": true` satırını sil, yoksa butonlar arama yapmaz.
 - Dosyayı GitHub'da düzenleyip kaydetmek yeterli, site birkaç dakikada kendini yeniler.
+- Derleme veriyi kontrol eder (telefon `+90…` biçiminde mi, kod tekrar ediyor mu, yedek var mı). Hata varsa site yayına çıkmaz, hata satırı Actions'ta yazar.
+
+İsteğe bağlı alanlar:
+
+| Alan | Nerede | Ne yapar |
+|---|---|---|
+| `odeme` | şoför ya da durak | `["nakit","kart","iban","fatura"]`. Yolcuya ödeme şekli gösterilir. Şoförde yoksa durağınki geçerli |
+| `calisma` | şoför | `"07.00-02.00"`. Saat dışında sayfada "Şu an çalışmıyor" yazar |
+| `whatsapp` | şoför ya da durak | Telefondan farklıysa WhatsApp numarası |
+| `foto` | şoför | Fotoğraf adresi. Baş harf yerine yüz görünür |
+| `disariYonlendirme` | durak | `true` ise şoförler başka duraklardan da anlaşmalı arkadaş seçebilir |
+| `pasif` | şoför | `true`: paketi yenilenmedi. Sayfası durağın numarasını gösterir, şoförün numarası kalkar |
+
+Tanıtım sayfasındaki fiyat hesaplayıcı `paketler[].aracBasi`, `yenilemeAracBasi` ve `enAz` alanlarını kullanır. `marka.odemeNotu` fiyatın altında yazar.
 
 ## Canlı müsaitlik için Supabase
 
@@ -101,6 +115,8 @@ Supabase ayarı boşken site **demo modunda** çalışır: durum sadece o telefo
 3. Her şoför için dosyanın sonundaki örnekle kod ve **6 haneli** PIN ekle.
 4. Rapor için dosyanın sonundaki örnekle uzun bir **yönetici PIN'i** ekle.
 5. `data/site.json` → `ayarlar.supabaseUrl` ve `ayarlar.supabaseAnonKey` doldur.
+
+Güvenlik: PIN'ler şifreli saklanır. 5 yanlış denemede o adresten 15 dakika kilit, tekrarında katlanır. Kilitlenen PIN'i hemen açmak için dosyanın sonundaki satır var. Sayaca aynı telefondan saatte en çok 60 kayıt girer, zamanı sunucu yazar.
 
 İnternet ya da Supabase çökerse sayfa yine açılır, şoför yine aranır; sadece müsaitlik "bilinmiyor" görünür. Ücretsiz Supabase projesi 1 hafta hiç kullanılmazsa uyur; gerçek müşteride bunu ücretli plana geçmek ya da haftalık bir ping ile önlemek gerekir.
 
@@ -118,6 +134,10 @@ npm run build      # dist/ klasörüne siteyi üretir
 npm run serve      # http://localhost:5173
 npm run onizleme   # onizleme/onizleme.html: tek dosyalık demo
 ```
+
+Ana ekran ikonları ve paylaşım görselleri `src/gorsel/` içinde hazır. Renk ya da yazı değişirse `node scripts/ikon-uret.mjs` ile yeniden üretilir (Playwright gerekir). Yazı tipleri `src/fonts/` içinde, dışarıdan yüklenmez.
+
+İnceleme notları ve yapılanlar: [docs/INCELEME.md](docs/INCELEME.md).
 
 ## Kişisel veri
 

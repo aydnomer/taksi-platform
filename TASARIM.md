@@ -28,7 +28,10 @@ Yeni müşteri = şablonu `data/site.json` içine kopyala, alanları doldur, `"d
 
 ## Yazı dili
 
-- Sen diye hitap et, kısa cümle kur. "Taksi çağır", "Konumumu gönder", "Ulaşamadın mı?"
+- Sen diye hitap et, kısa cümle kur. "Taksi çağır", "WhatsApp'tan konum at", "Ulaşamadın mı?"
+- WhatsApp açan her butonda "WhatsApp" kelimesi ve simgesi olsun. Yolcu nereye gideceğini bilsin.
+- İsim eklerini elle yazma, `ek(ad, "e"|"i"|"in"|"de")` kullan: "Hasan Abi'ye", "Kemal'i".
+- Büyük harf sadece cümle başında: "Taksi çağır", "Mehmet Abi'yi ara".
 - Şoförden "Ahmet Abi" diye bahset (`hitap` alanı).
 - Uydurma rakam, uydurma yorum, uydurma referans yok. Google puanı sadece gerçek değer varsa (`google.puan`).
 - Google yorum butonu herkese gösterilir. Memnuniyete göre filtreleme yok (Google kuralı).
@@ -40,8 +43,12 @@ Yeni müşteri = şablonu `data/site.json` içine kopyala, alanları doldur, `"d
 
 - Telefon önce: 390 px genişlikte yan kaydırma olmamalı. Her değişiklikten sonra telefon boyutunda bak.
 - Durak sitesi sırası: Açılış (çağır + canlı müsait sayısı) → Araçlarımız → Hizmetler/bölgeler → Güvenli yolculuk → Sorular → İletişim. Altta sabit "Taksi çağır / Konum" çubuğu.
-- Şoför sayfası sırası: Kimlik kartı + çağır → (meşgulse yönlendirme kutusu) → Anlaşmalı şoförler → Rehber/Google/Durak → Güvenli yolculuk → (tek şoförse) Hizmetler.
+- Şoför sayfası sırası: (pleksiden geldiyse "Bu araçtasın" kartı) → Kimlik kartı + ödeme/saat → çağır (meşgulse önce müsait arkadaş) → Diğer seçenekler → Rehber/Google/Durak → Güvenli yolculuk → (tek şoförse) Hizmetler.
+- Aramadan dönen yolcuya önce "Ulaşabildin mi?" sorulur; arkadaş sadece "Hayır" deyince önerilir. Yolcuyu ikinci taksiyi çağırmaya itme.
 - Butonlar en az 48 px yüksek, ana buton 60-74 px.
+- Açık temada küçük yazının kontrastı en az 4,5:1. Durum renkleri açık temada koyulaşır (`--yesil`, `--amber`, `--gri`).
+- Kalıcı bir şey değiştiren her düğme hemen kaydeder ve "Geri al" gösterir. Ayrı "Kaydet" düğmesi koyma.
+- Boş sayı gösterme: veri yoksa "henüz çağrı yok" gibi bir cümle yaz.
 
 ## Satışta gösterilecek sıra (durak başkanına)
 

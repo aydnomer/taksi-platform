@@ -8,5 +8,10 @@
   "plaka": "23 T 0000",
   "arac": "Marka Model · Renk",
   "yil": 10,
-  "yedekler": ["arkadas-1", "arkadas-2"]
+  "calisma": "",
+  "foto": "",
+  "yedekler": [
+    "arkadas-1",
+    "arkadas-2"
+  ]
 }

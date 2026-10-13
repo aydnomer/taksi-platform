@@ -6,7 +6,8 @@
     "sehir": "Elazığ",
     "iletisimTelefon": "+905307652147",
     "iletisimEposta": "aydnomrfrk@gmail.com",
-    "gelistirici": "Ömer Faruk Aydın"
+    "gelistirici": "Ömer Faruk Aydın",
+    "odemeNotu": "Nakit ya da havale. Durak paketinde ödemeyi durak kasası ya da şoförler tek tek yapabilir."
   },
   "ayarlar": {
     "supabaseUrl": "",
@@ -26,7 +27,10 @@
         "Tek tuşla WhatsApp konum ile çağırma",
         "Rehbere kaydet ve Google yorum butonu",
         "Anlaşmalı şoför yönlendirmesi"
-      ]
+      ],
+      "aracBasi": 850,
+      "yenilemeAracBasi": 400,
+      "enAz": 1
     },
     {
       "ad": "Durak Paketi",
@@ -41,7 +45,10 @@
         "Meşgul şoförün yolcusu durakta kalır",
         "Durak yöneticisi için müsaitlik ekranı",
         "Kurulumu ve güncellemeleri biz yaparız"
-      ]
+      ],
+      "aracBasi": 700,
+      "yenilemeAracBasi": 300,
+      "enAz": 5
     }
   ],
   "duraklar": [
@@ -84,19 +91,23 @@
       "sss": [
         {
           "s": "Taksi ne kadar sürede gelir?",
-          "c": "Müsait aracımız size en yakınsa genelde 5-10 dakika. Konumunuzu gönderirseniz süreyi şoför size yazar."
+          "c": "Müsait aracımız sana en yakınsa genelde 5-10 dakika. Konumunu gönderirsen süreyi şoför sana yazar."
         },
         {
           "s": "Aradığım şoför meşgulse ne olur?",
-          "c": "Sayfa bunu size gösterir ve aynı duraktaki müsait arkadaşına yönlendirir. Beklemek isterseniz yine kendi şoförünüzü arayabilirsiniz."
+          "c": "Sayfa bunu sana gösterir ve aynı duraktaki müsait arkadaşına yönlendirir. Beklemek istersen yine kendi şoförünü arayabilirsin."
+        },
+        {
+          "s": "Nasıl öderim?",
+          "c": "Ücret taksimetreye göre, belediye tarifesiyle. Nakit ya da kartla ödeyebilirsin. Fiş istersen şoföre söyle."
         },
         {
           "s": "Uygulama indirmem gerekiyor mu?",
-          "c": "Hayır. Sayfayı ana ekrana eklerseniz uygulama gibi açılır. Mağazadan bir şey indirmezsiniz."
+          "c": "Hayır. Sayfayı ana ekrana eklersen uygulama gibi açılır. Mağazadan bir şey indirmezsin."
         },
         {
           "s": "Konumum kaydediliyor mu?",
-          "c": "Hayır. Konumunuz sadece sizin WhatsApp'ınızdan şoföre mesaj olarak gider. Biz saklamayız."
+          "c": "Hayır. Konumun sadece senin WhatsApp'ından şoföre mesaj olarak gider. Biz saklamayız."
         }
       ],
       "renk": "sari",
@@ -112,7 +123,11 @@
         "Hazar Gölü",
         "Park 23 AVM"
       ],
-      "yonetimNot": "Demo PIN 1234"
+      "yonetimNot": "Demo PIN 1234",
+      "odeme": [
+        "nakit",
+        "kart"
+      ]
     },
     {
       "kod": "kale-taksi",
@@ -159,6 +174,9 @@
           "s": "Harput turu ne kadar sürer?",
           "c": "Genelde 1-2 saat. Fiyatı binmeden önce konuşuruz."
         }
+      ],
+      "odeme": [
+        "nakit"
       ]
     }
   ],
@@ -174,8 +192,7 @@
       "yil": 14,
       "yedekler": [
         "mehmet",
-        "hasan",
-        "kemal"
+        "hasan"
       ]
     },
     {
@@ -260,6 +277,11 @@
         "Otogar",
         "Malatya",
         "Bingöl"
+      ],
+      "calisma": "07.00-02.00",
+      "odeme": [
+        "nakit",
+        "iban"
       ]
     },
     {
@@ -272,8 +294,7 @@
       "arac": "Fiat Egea · Beyaz",
       "yil": 8,
       "yedekler": [
-        "ibrahim",
-        "kemal"
+        "ibrahim"
       ]
     },
     {
