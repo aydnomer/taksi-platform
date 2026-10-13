@@ -193,14 +193,18 @@
     return ic;
   }
 
-  var Depo = SUPA ? {
+  var Bulut = SUPA ? {
     yukle: function () {
       var h = { apikey: SUPA.supabaseAnonKey, Authorization: "Bearer " + SUPA.supabaseAnonKey };
       return fetch(SUPA.supabaseUrl + "/rest/v1/durumlar?select=kod,durum,donus_dk,yedekler,guncelleme", { headers: h })
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
         .then(function (rows) {
-          DURUM = {}; YEDEK = {}; BAGLANTI_YOK = false;
+          // Örnek (demo) şoförlerin durumu telefonda kalır, gerçeklerinki sunucudan gelir
+          Object.keys(DURUM).forEach(function (k) { if (!demoKod(k)) delete DURUM[k]; });
+          Object.keys(YEDEK).forEach(function (k) { if (!demoKod(k)) delete YEDEK[k]; });
+          BAGLANTI_YOK = false;
           rows.forEach(function (r) {
+            if (demoKod(r.kod)) return;
             DURUM[r.kod] = { durum: r.durum, donusDk: r.donus_dk, zaman: Date.parse(r.guncelleme) };
             if (r.yedekler && r.yedekler.length) YEDEK[r.kod] = r.yedekler;
           });
@@ -260,12 +264,16 @@
         .then(function (l) { return l ? l.map(function (o) { o.zaman = Date.parse(o.zaman); return o; }) : null; })
         .catch(function () { return false; }); // false: sunucuya ulaşılamadı, null: PIN yanlış
     }
-  } : {
+  } : null;
+
+  // Örnek sayfalar (demo) her zaman bu telefonda çalışır, PIN 1234: satışta göstermek için
+  var Yerel = {
     yukle: function () {
       var kayit = ls("taksicim_durum") || {};
       var tohum = S.demoDurum || {};
       DURUM = {};
       S.soforler.forEach(function (s) {
+        if (SUPA && !demoMu(s)) return;
         var d = kayit[s.kod] || (tohum[s.kod] ? { durum: tohum[s.kod].durum, donusDk: tohum[s.kod].donusDk || null, zaman: Date.now() } : null);
         if (d) {
           // demo: eski kayıtlar canlı görünsün diye zamanı tazele
@@ -305,6 +313,28 @@
       return Promise.resolve(l.filter(function (o) {
         return (!baslangic || o.zaman >= baslangic) && (!ic || ic[o.kod] || ic[o.hedef]);
       }));
+    }
+  };
+
+  // Kod örnek bir sayfaya mı ait? ("d:kod" durak sitesi, yoksa şoför kodu)
+  function demoKod(k) {
+    if (!k) return false;
+    if (k.indexOf("d:") === 0) { var d = S.duraklar.filter(function (x) { return x.kod === k.slice(2); })[0]; return !!(d && d.demo); }
+    var s = sofor(k); return !!(s && demoMu(s));
+  }
+  function demoDurak(k) { var d = S.duraklar.filter(function (x) { return x.kod === k; })[0]; return !!(d && d.demo); }
+
+  // Supabase ayarlıysa gerçek şoförler sunucuya, örnekler telefona gider; ayarlı değilse hepsi telefonda
+  var Depo = !Bulut ? Yerel : {
+    yukle: function () { return Yerel.yukle().then(Bulut.yukle); },
+    guncelle: function (kod, pin, durum, donusDk, yedekler) { return (demoKod(kod) ? Yerel : Bulut).guncelle(kod, pin, durum, donusDk, yedekler); },
+    pinDogru: function (kod, pin) { return (demoKod(kod) ? Yerel : Bulut).pinDogru(kod, pin); },
+    durakPinDogru: function (durakKod, pin) { return (demoDurak(durakKod) ? Yerel : Bulut).durakPinDogru(durakKod, pin); },
+    durakGuncelle: function (durakKod, pin, kod, durum, donusDk) { return (demoDurak(durakKod) ? Yerel : Bulut).durakGuncelle(durakKod, pin, kod, durum, donusDk); },
+    olay: function (kod, tur, hedef) { (demoKod(kod) ? Yerel : Bulut).olay(kod, tur, hedef); },
+    olaylar: function (tip, kod, pin, baslangic) {
+      var yerel = tip === "sofor" ? demoKod(kod) : tip === "durak" ? demoDurak(kod) : pin === "1234"; // rapor: 1234 örnek veriyi açar
+      return (yerel ? Yerel : Bulut).olaylar(tip, kod, pin, baslangic);
     }
   };
 
