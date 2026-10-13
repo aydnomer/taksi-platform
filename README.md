@@ -118,7 +118,28 @@ Supabase ayarı boşken site **demo modunda** çalışır: durum sadece o telefo
 
 Güvenlik: PIN'ler şifreli saklanır. 5 yanlış denemede o adresten 15 dakika kilit, tekrarında katlanır. Kilitlenen PIN'i hemen açmak için dosyanın sonundaki satır var. Sayaca aynı telefondan saatte en çok 60 kayıt girer, zamanı sunucu yazar.
 
-İnternet ya da Supabase çökerse sayfa yine açılır, şoför yine aranır; sadece müsaitlik "bilinmiyor" görünür. Ücretsiz Supabase projesi 1 hafta hiç kullanılmazsa uyur; gerçek müşteride bunu ücretli plana geçmek ya da haftalık bir ping ile önlemek gerekir.
+İnternet ya da Supabase çökerse sayfa yine açılır, şoför yine aranır; sadece müsaitlik "bilinmiyor" görünür ve o sürede sayaç tutulmaz.
+
+### Ücretsiz planda kalmak (ödeme yok)
+
+Ücretsiz Supabase projesi 1 hafta hiç kullanılmazsa uyur ve otomatik yedek almaz. İkisini de `.github/workflows/koruma.yml` ücretsiz çözer:
+
+- **Uyumasın:** Her sabah Supabase'e küçük bir okuma yapar. Ayar gerekmez, `site.json`'daki adresi kullanır. Supabase cevap vermezse iş kırmızı olur ve GitHub sana e-posta atar.
+- **Yedek:** Her gece veritabanını şifreleyip GitHub'da 30 gün saklar (Actions → Supabase koruma → çalıştırma → Artifacts). Açmak için GitHub'da **Settings → Secrets and variables → Actions** altına iki gizli değer ekle:
+  - `SUPABASE_DB_URL`: Supabase panelinde **Connect → Session pooler** bağlantı adresi (şifresiyle birlikte). "Direct connection" GitHub'dan çalışmaz.
+  - `YEDEK_SIFRE`: Uzun bir şifre. Kaybetme; yedek onsuz açılmaz. Depo herkese açık olduğu için yedek şifresiz konmaz.
+- **GitHub durdurmasın:** GitHub 60 gün hiç kayıt olmayan depoda zamanlanmış işleri durdurur. İş, 50 gündür kayıt yoksa küçük bir tarih dosyası günceller.
+
+Yedekten geri yükleme:
+
+```bash
+gpg -d yedek-2026-10-13.sql.gz.gpg | gunzip > yedek.sql   # YEDEK_SIFRE sorulur
+psql "SUPABASE_DB_URL" -f yedek.sql
+```
+
+### Google Analytics (isteğe bağlı)
+
+`ayarlar.googleAnalytics` alanına ölçüm kimliğini (`G-...`) yazarsan yolcu sayfaları ve tanıtım sayfası GA'ya da sayılır. Çerezsiz çalışır, yolcuya izin penceresi çıkmaz. Paneller, rapor ve örnek (demo) sayfalar GA'ya gitmez. Olay adları: `sayfa_acildi`, `arama`, `whatsapp_konum`, `arkadasa_yonlendi`, `rehbere_kaydet`, `google_yorum`, `uygulamadan_acildi`, `paylas`, `esya_unuttum`. Her olayda `sofor` (şoför kodu, durak için `d:kod`) ve `kaynak` (nfc, qr, uygulama, durak, link) var; GA'da raporlarda görmek için bunları **Yönetici → Özel tanımlar**'dan özel boyut olarak ekle.
 
 ## Yayınlama
 

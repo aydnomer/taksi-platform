@@ -12,6 +12,7 @@
   "ayarlar": {
     "supabaseUrl": "",
     "supabaseAnonKey": "",
+    "googleAnalytics": "",
     "eskiDurumSaat": 8
   },
   "paketler": [

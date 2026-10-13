@@ -308,6 +308,32 @@
     }
   };
 
+  // Google Analytics: sadece yolcu sayfalarında, çerezsiz (yolcuya izin penceresi gerekmez).
+  // Her sayaç olayı GA'ya da gider; şoför kodu ve nereden geldiği (nfc, qr, uygulama…) yanında.
+  var GA_AD = { ziyaret: "sayfa_acildi", arama: "arama", konum: "whatsapp_konum", yonlendirme: "arkadasa_yonlendi", rehber: "rehbere_kaydet", google: "google_yorum", kurulum: "uygulamadan_acildi", paylas: "paylas", esya: "esya_unuttum" };
+  var GA = (function () {
+    var id = S.ayarlar && S.ayarlar.googleAnalytics;
+    if (!id || HASH || ["sofor", "durak", "tanitim"].indexOf(P.view) < 0) return null;
+    var sf = P.view === "sofor" ? sofor(P.kod) : null;
+    var dk = P.view === "durak" ? S.duraklar.filter(function (x) { return x.kod === P.kod; })[0] : null;
+    if ((sf && demoMu(sf)) || (dk && dk.demo)) return null; // örnek sayfalar sayıları kirletmesin
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date());
+    window.gtag("config", id, { client_storage: "none", allow_google_signals: false, allow_ad_personalization_signals: false, kaynak: KAYNAK });
+    var sc = document.createElement("script");
+    sc.async = true; sc.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(id);
+    document.head.appendChild(sc);
+    return window.gtag;
+  })();
+  if (GA) {
+    var depoOlay = Depo.olay;
+    Depo.olay = function (kod, tur, hedef) {
+      depoOlay(kod, tur, hedef);
+      GA("event", GA_AD[tur] || tur, { sofor: kod, hedef: hedef || "", kaynak: KAYNAK });
+    };
+  }
+
   var ETIKET = { musait: "Müsait", yolcuda: "Yolcuda", kapali: "Kapalı", bilinmiyor: "Durumu bilinmiyor" };
 
   function durumu(kod) {
@@ -1823,8 +1849,10 @@
       }).catch(function () {});
     });
     // Yeni sürüm yayınlanınca, kimse bir şey yazmıyorsa sayfayı sessizce yenile
-    var yenilendi = false;
+    // İlk ziyarette de controllerchange gelir (yeni kurulum); o zaman yenilemeye gerek yok, sayfa zaten taze
+    var ilkKurulum = !navigator.serviceWorker.controller, yenilendi = false;
     navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (ilkKurulum) { ilkKurulum = false; return; }
       if (yenilendi || mesgul()) return;
       yenilendi = true; location.reload();
     });
