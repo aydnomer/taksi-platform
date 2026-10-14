@@ -10,8 +10,8 @@
     "odemeNotu": "Nakit ya da havale. Durak paketinde ödemeyi durak kasası ya da şoförler tek tek yapabilir."
   },
   "ayarlar": {
-    "supabaseUrl": "",
-    "supabaseAnonKey": "",
+    "supabaseUrl": "https://dulnohtomqodzodzyurk.supabase.co",
+    "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bG5vaHRvbXFvZHpvZHp5dXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwMTE3NTQsImV4cCI6MjEwNzU4Nzc1NH0.3A4N2ZuQ5YXVIAKyhULFX39S_ERWljklUod29rjK2w8",
     "googleAnalytics": "",
     "eskiDurumSaat": 8
   },

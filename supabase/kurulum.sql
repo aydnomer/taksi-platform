@@ -97,9 +97,9 @@ create policy "olay herkes ekler" on public.olaylar for insert with check (
   and zaman > now() - interval '1 minute' and zaman < now() + interval '1 minute'
 );
 drop policy if exists "olay herkes okur" on public.olaylar;
-revoke all on public.olaylar from anon;
+-- Supabase "authenticated" rolüne de varsayılan yetki verir; site giriş kullanmıyor, onu da kapatıyoruz
+revoke all on public.olaylar, public.durumlar, public.pinler, public.durak_pinler, public.yonetici_pin, public.pin_deneme from anon, authenticated;
 grant insert (kod, tur, hedef, kaynak, cihaz) on public.olaylar to anon;
-revoke all on public.durumlar from anon;
 grant select on public.durumlar to anon;
 
 -- ---------- PIN KONTROLÜ (kilitli) ----------
@@ -197,7 +197,7 @@ begin
 end $$;
 
 -- Fonksiyonlar varsayılan olarak herkese açıktır; sadece gerekenleri yolcu/şoför tarafına açıyoruz
-revoke execute on all functions in schema public from public, anon;
+revoke execute on all functions in schema public from public, anon, authenticated;
 grant execute on function public.pin_kontrol(text, text) to anon;
 grant execute on function public.durak_pin_kontrol(text, text) to anon;
 grant execute on function public.durum_guncelle(text, text, text, int, text[]) to anon;
