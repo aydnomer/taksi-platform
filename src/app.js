@@ -383,6 +383,8 @@
     var yazi = ETIKET[d.durum] + (d.kalan ? " · ~" + d.kalan + " dk" : "");
     return '<span class="durum ' + d.durum + '">' + esc(yazi) + "</span>";
   }
+  // Yolcu sayfalarında "durumu bilinmiyor" yazmayız: şoför hiç basmasa da sayfa normal görünür
+  function yolcuRozet(kod) { return durumu(kod).durum === "bilinmiyor" ? "" : durumRozet(kod); }
   function yedekleri(s) {
     return (YEDEK[s.kod] || s.yedekler || []).map(sofor).filter(Boolean);
   }
@@ -730,7 +732,7 @@
       "</div></div>" +
       '<div class="y-ic y-kimlik"><div class="y-yuz" aria-hidden="true">' + (s.foto ? '<img src="' + esc(fotoYol(s.foto)) + '" alt="">' : esc(bas(s.ad))) + "</div>" +
       '<div class="y-kim"><h1>' + esc(s.ad) + "</h1><p>" + esc(s.arac) + (s.yil ? " · " + s.yil + " yıllık şoför" : "") + "</p>" +
-      '<div class="y-satir">' + plaka(s.plaka) + durumRozet(s.kod) + "</div></div></div></header>";
+      '<div class="y-satir">' + plaka(s.plaka) + yolcuRozet(s.kod) + "</div></div></div></header>";
 
     h += '<main class="y-ic y-govde">';
     if (aracta) {
@@ -769,7 +771,7 @@
       h += '<section class="y-bolum"><h2>' + (sec.yonlendi && sec.hedef ? "Diğer seçenekler" : esc(ad) + " meşgulse") + '</h2><div class="y-liste">';
       yed.forEach(function (k) {
         var kd = durumu(k.kod).durum;
-        h += '<div class="y-kisi' + (kd === "musait" ? "" : " pasif") + '"><div class="y-kucuk-gorsel">' + gorsel(k.aracFoto, kd !== "musait") + '</div><div class="ad"><b>' + esc(k.hitap || k.ad) + "</b><small>" + esc(k.plaka) + "</small>" + durumRozet(k.kod) + "</div>" +
+        h += '<div class="y-kisi' + (kd === "musait" ? "" : " pasif") + '"><div class="y-kucuk-gorsel">' + gorsel(k.aracFoto, kd !== "musait") + '</div><div class="ad"><b>' + esc(k.hitap || k.ad) + "</b><small>" + esc(k.plaka) + "</small>" + yolcuRozet(k.kod) + "</div>" +
           '<button class="y-kisi-ara" data-ara="' + k.kod + '" aria-label="' + esc(ek(k.hitap || k.ad, "i")) + ' ara"' + (kd === "kapali" ? " disabled" : "") + ">" + ik("tel") + "</button></div>";
       });
       h += "</div></section>";
@@ -901,6 +903,8 @@
     var demo = !!d.demo;
     var sf = S.soforler.filter(function (s) { return s.durak === d.kod; });
     var musait = sf.filter(function (s) { return durumu(s.kod).durum === "musait"; });
+    // Durumunu hiç girmeyen şoför de aranabilir: çağrı ona gider, açmazsa telefonu arkadaşına yönlendirir
+    var bos = musait.length ? musait : sf.filter(function (s) { return durumu(s.kod).durum === "bilinmiyor"; });
     document.title = d.ad + " · " + S.marka.sehir + " Taksi";
     ziyaretSay("d:" + d.kod);
     var ikonlar = { sehir: "sehir", ucak: "ucak", yol: "yol", ay: "ay", kalkan: "kalkan", saat: "saat" };
@@ -916,10 +920,10 @@
     h += '<header class="y-kapak"><div class="y-kapak-gorsel">' + gorsel(d.kapakFoto || (sf[0] && sf[0].aracFoto), false, true) + "</div>" +
       '<div class="y-ust"><div class="y-ic"><span class="y-marka">' + esc(d.ad) + "<small>" + esc(S.marka.sehir) + " · " + esc(d.acik || "7/24") + ' açık</small></span>' +
       '<button class="y-tel" data-durak-ara aria-label="Durağı ara: ' + esc(telGoster(d.telefon)) + '">' + esc(telGoster(d.telefon)) + "</button></div></div>" +
-      '<div class="y-ic y-giris"><span class="y-canli' + (musait.length ? "" : " yok") + '">' + (musait.length ? "Şu an " + musait.length + " şoför müsait" : "Şu an bütün araçlar yolcuda") + "</span>" +
+      '<div class="y-ic y-giris"><span class="y-canli' + (bos.length ? "" : " yok") + '">' + (musait.length ? "Şu an " + musait.length + " şoför müsait" : bos.length ? esc(d.acik || "7/24") + " hizmetinizdeyiz" : "Şu an bütün araçlar yolcuda") + "</span>" +
       "<h1>" + esc(slogan[0]) + (slogan[1] ? " <em>" + esc(slogan[1]) + "</em>" : "") + (slogan[2] ? " " + esc(slogan[2]) : "") + "</h1>" +
       "<p>" + esc(d.tanitim || "Gece gündüz, şehir içi ve havalimanı. Bas, ara, birkaç dakikada kapında.") + "</p>" +
-      '<div id="dk-eylem" class="y-eylem"><button class="y-cagir" data-musait-cagir><b>' + ik("tel") + "Taksi çağır</b><small>" + (musait.length ? "Müsait bir şoförümüze bağlanırsın" : "Çağrın durağa gider") + "</small></button>" +
+      '<div id="dk-eylem" class="y-eylem"><button class="y-cagir" data-musait-cagir><b>' + ik("tel") + "Taksi çağır</b><small>" + (bos.length ? "Müsait bir şoförümüze bağlanırsın" : "Çağrın durağa gider") + "</small></button>" +
       '<button class="y-konum cam" data-durak-konum>' + ik("wa") + "Konumumu WhatsApp'tan at</button></div></div></header>";
 
     h += '<main class="y-ic y-govde">';
@@ -933,7 +937,7 @@
       var kd = durumu(s.kod).durum;
       var bos = kd === "musait" || kd === "bilinmiyor";
       var yer = bos ? null : hedefSec(s).hedef;
-      h += '<article class="y-sofor' + (bos ? "" : " yolda") + '"><a class="y-sofor-gorsel" href="' + link("sofor", s.kod) + '" aria-label="' + esc(s.ad) + ' sayfası">' + gorsel(s.aracFoto, !bos) + durumRozet(s.kod) + plaka(s.plaka) + "</a>" +
+      h += '<article class="y-sofor' + (bos ? "" : " yolda") + '"><a class="y-sofor-gorsel" href="' + link("sofor", s.kod) + '" aria-label="' + esc(s.ad) + ' sayfası">' + gorsel(s.aracFoto, !bos) + yolcuRozet(s.kod) + plaka(s.plaka) + "</a>" +
         '<div class="y-sofor-alt"><div class="y-yuz" aria-hidden="true">' + (s.foto ? '<img src="' + esc(fotoYol(s.foto)) + '" alt="">' : esc(bas(s.ad))) + '</div><div class="ad"><b>' + esc(s.ad) + "</b><small>" + esc(s.arac) + (s.yil ? " · " + s.yil + " yıllık şoför" : "") + "</small></div>" +
         (bos ? '<button class="y-sofor-ara" data-sofor-ara="' + s.kod + '">' + ik("tel") + esc(ek(s.hitap || s.ad, "i")) + " ara</button>"
           : yer ? '<button class="y-sofor-ara ikinci" data-sofor-ara="' + yer.kod + '">' + ik("tel") + (kd === "kapali" ? "Kapalı · " : "Yolcuda · ") + esc(ek(yer.hitap || yer.ad, "i")) + " ara</button>"
@@ -967,7 +971,7 @@
     // Konum: durağın WhatsApp'ı varsa ona, yoksa müsait bir şoföre
     app.querySelectorAll("[data-durak-konum]").forEach(function (b) {
       b.addEventListener("click", function () {
-        var m = !d.whatsapp && musait.length ? musait[Math.floor(Math.random() * musait.length)] : null;
+        var m = !d.whatsapp && bos.length ? bos[Math.floor(Math.random() * bos.length)] : null;
         if (m) ls("taksicim_son_" + d.kod, m.kod);
         konumGonder(m || d, { demo: demo, kaynak: m, yonlendi: false, olayKod: "d:" + d.kod });
       });
@@ -984,8 +988,8 @@
     }
     app.querySelectorAll("[data-musait-cagir]").forEach(function (b) {
       b.addEventListener("click", function () {
-        if (!musait.length) return ara(d, { demo: demo, olayKod: "d:" + d.kod });
-        var m = musait[Math.floor(Math.random() * musait.length)];
+        if (!bos.length) return ara(d, { demo: demo, olayKod: "d:" + d.kod });
+        var m = bos[Math.floor(Math.random() * bos.length)];
         ls("taksicim_son_" + d.kod, m.kod);
         ara(m, { kaynak: m, yonlendi: false, demo: demo, olayKod: "d:" + d.kod });
       });
