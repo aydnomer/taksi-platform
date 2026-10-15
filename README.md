@@ -39,7 +39,7 @@ Yolcu kendi şoförünü çağırmak istiyor, şoför yolcuda. Üç katman var, 
 | Kod | Ne yapar |
 |---|---|
 | `**67*05XXXXXXXXX#` | Meşgulken yönlendir |
-| `**61*05XXXXXXXXX#` | Açmazsa yönlendir |
+| `**61*05XXXXXXXXX**10#` | 10 saniyede açmazsa yönlendir (süre 5-30 sn arası seçilebilir) |
 | `**62*05XXXXXXXXX#` | Telefon kapalıysa yönlendir |
 | `##002#` | Bütün yönlendirmeleri kapat |
 

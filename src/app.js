@@ -1242,10 +1242,10 @@
     var y0 = yed.length ? sofor(yed[0]) : null;
     var no = y0 ? "0" + waNo(y0.telefon).replace(/^90/, "") : null;
     h += '<div class="kutu"><p class="kutu-baslik">Rehberden arayanlar için</p><p class="pn-alt" style="margin-top:-6px">Yolcu seni rehberden direkt ararsa sayfa devreye giremez. Hattına bir kere yönlendirme kur; meşgulken ya da açmazsan arama ' + (y0 ? "<b>" + esc(ek(y0.hitap || y0.ad, "e")) + "</b>" : "listendeki ilk arkadaşına") + " geçer. Düğmeye bas, açılan ekranda ara tuşuna bas.</p>" +
-      (no ? '<div class="yon-liste">' + [["**67*" + no + "#", "Meşgulken yönlendir"], ["**61*" + no + "#", "Açmazsan yönlendir"], ["**62*" + no + "#", "Telefon kapalıyken yönlendir"]].map(function (r) {
+      (no ? '<div class="yon-liste">' + [["**67*" + no + "#", "Meşgulken hemen yönlendir"], ["**61*" + no + "**10#", "10 saniyede açmazsan yönlendir"], ["**62*" + no + "#", "Telefon kapalıyken yönlendir"]].map(function (r) {
         return '<a class="yon-satir" href="tel:' + r[0].replace(/#/g, "%23") + '"><span><b>' + r[1] + '</b><small class="kod">' + esc(r[0]) + "</small></span><span class=\"yon-kur\">Kur</span></a>";
       }).join("") + '<a class="yon-satir kapat" href="tel:' + "##002#".replace(/#/g, "%23") + '"><span><b>Bütün yönlendirmeleri kapat</b><small class="kod">##002#</small></span><span class="yon-kur">Kapat</span></a></div>' +
-        '<p class="pn-not">Arkadaş sıran değişirse kodu yeniden kur. Yönlendirilen arama hattının tarifesine göre ücretlendirilebilir. Kodlar Turkcell, Vodafone ve Türk Telekom\'da genelde çalışır; ilk kurulumda bir kere dene.</p>'
+        '<p class="pn-not">İsteğe bağlı. Aktarılan arama senin hattından gitmiş sayılır, paketindeki dakikadan düşer; paketin biterse faturana yansır. Arkadaş sıran değişirse kodu yeniden kur. Kodlar Turkcell, Vodafone ve Türk Telekom\'da genelde çalışır; ilk kurulumda bir kere dene.</p>'
         : '<p class="pn-not">Önce yukarıdan bir arkadaş ekle.</p>') + "</div>";
 
     h += '<div class="kutu"><p class="kutu-baslik">Uygulamayı hiç açma</p><p class="pn-alt" style="margin-top:-6px">Torpidoya iki küçük etiket yapıştırırız. Yolcu binince telefonunu <b style="color:var(--amber)">YOLCU ALDIM</b> etiketine dokundurursun, o kadar. ' + HIZLI_DK + ' dakika sonra kendiliğinden müsait olursun. Erken boşalırsan <b style="color:var(--yesil)">BOŞALDIM</b> etiketine dokundur.</p>' +
