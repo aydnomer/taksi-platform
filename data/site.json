@@ -128,7 +128,25 @@
       "odeme": [
         "nakit",
         "kart"
-      ]
+      ],
+      "google": {
+        "puan": 4.9,
+        "sayi": 128,
+        "yorumlar": [
+          {
+            "ad": "Örnek yolcu 1",
+            "metin": "Gece 2'de aradım, 5 dakikada geldi. Araç tertemizdi."
+          },
+          {
+            "ad": "Örnek yolcu 2",
+            "metin": "Havalimanına zamanında götürdü, bavulları da kendisi yükledi."
+          },
+          {
+            "ad": "Örnek yolcu 3",
+            "metin": "Şoför yolcudaydı, sayfa beni direkt arkadaşına bağladı. Çok pratik."
+          }
+        ]
+      }
     },
     {
       "kod": "kale-taksi",

@@ -71,6 +71,12 @@ await writeFile(path.join(DIST, "assets/veri.js"), VERI);
 await writeFile(path.join(DIST, "sw.js"), SW.replace("__SURUM__", surum));
 for (const f of await readdir(path.join(KOK, "src/fonts"))) if (f.endsWith(".woff2")) await copyFile(path.join(KOK, "src/fonts", f), path.join(DIST, "assets/fonts", f));
 for (const f of await readdir(path.join(KOK, "src/gorsel"))) await copyFile(path.join(KOK, "src/gorsel", f), path.join(DIST, "assets/gorsel", f));
+// Şoför ve araç fotoğrafları: data/foto → /foto
+try {
+  const fotolar = await readdir(path.join(KOK, "data/foto"));
+  await mkdir(path.join(DIST, "foto"), { recursive: true });
+  for (const f of fotolar) if (/\.(jpe?g|png|webp)$/i.test(f)) await copyFile(path.join(KOK, "data/foto", f), path.join(DIST, "foto", f));
+} catch (e) { if (e.code !== "ENOENT") throw e; }
 await writeFile(path.join(DIST, ".nojekyll"), "");
 if (SITE.marka.alanAdi) await writeFile(path.join(DIST, "CNAME"), SITE.marka.alanAdi + "\n");
 
@@ -248,6 +254,7 @@ function kontrol(site) {
     dk.add(d.kod);
     if (!d.ad) hata.push(`${d.kod}: ad eksik`);
     if (!TEL(d.telefon)) hata.push(`${d.ad}: telefon +905XXXXXXXXX biçiminde olmalı`);
+    if (d.kapakFoto && !URLOK(d.kapakFoto) && !/^[a-z0-9/_.-]+$/i.test(d.kapakFoto)) hata.push(`${d.ad}: kapakFoto adresi geçersiz`);
     if (d.whatsapp && !TEL(d.whatsapp)) hata.push(`${d.ad}: whatsapp +905XXXXXXXXX biçiminde olmalı`);
     if (!d.konum || !isFinite(d.konum.lat) || !isFinite(d.konum.lng)) hata.push(`${d.ad}: konum {lat, lng} eksik`);
     if (d.renk && !["sari", "turuncu", "yesil", "mavi"].includes(d.renk)) hata.push(`${d.ad}: renk sari, turuncu, yesil ya da mavi olabilir`);
@@ -263,7 +270,7 @@ function kontrol(site) {
     if (s.durak && !site.duraklar.some((d) => d.kod === s.durak)) hata.push(`${s.ad}: "${s.durak}" diye bir durak yok`);
     if ((s.yedekler || []).includes(s.kod)) hata.push(`${s.ad}: kendini yedek seçmiş`);
     if (s.googleYorum && !URLOK(s.googleYorum)) hata.push(`${s.ad}: googleYorum https:// ile başlamalı`);
-    if (s.foto && !URLOK(s.foto) && !/^[a-z0-9/_.-]+$/i.test(s.foto)) hata.push(`${s.ad}: foto adresi geçersiz`);
+    for (const f of ["foto", "aracFoto"]) if (s[f] && !URLOK(s[f]) && !/^[a-z0-9/_.-]+$/i.test(s[f])) hata.push(`${s.ad}: ${f} adresi geçersiz`);
     if (s.renk && !["sari", "turuncu", "yesil", "mavi"].includes(s.renk)) hata.push(`${s.ad}: renk geçersiz`);
   }
   for (const s of site.soforler) for (const y of s.yedekler || []) if (!kodlar.has(y)) hata.push(`${s.ad}: yedek "${y}" diye bir şoför yok`);

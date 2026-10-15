@@ -101,8 +101,14 @@ Her şey `data/site.json` dosyasında:
 | `calisma` | şoför | `"07.00-02.00"`. Saat dışında sayfada "Şu an çalışmıyor" yazar |
 | `whatsapp` | şoför ya da durak | Telefondan farklıysa WhatsApp numarası |
 | `foto` | şoför | Fotoğraf adresi. Baş harf yerine yüz görünür |
+| `aracFoto` | şoför | Aracın fotoğrafı (`"foto/ahmet-arac.jpg"`). Şoför sayfasının kapağında ve durak sitesindeki kartında görünür. Yoksa sarı taksi çizimi çıkar |
+| `kapakFoto` | durak | Durak sitesinin en üstündeki büyük fotoğraf. Yoksa ilk şoförün araç fotoğrafı, o da yoksa çizim |
+| `ozellikler` | durak | "Araçlarımız" listesi, ör. `["Klimalı", "Her yolculuktan önce temizlenir"]`. Yoksa genel bir liste çıkar |
+| `google` | durak ya da şoför | `{"puan": 4.9, "sayi": 128, "yorumlar": [{"ad": "...", "metin": "..."}]}`. Google puanı ve seçilmiş yorumlar. Yorumları Google'daki gerçek yorumlardan elle kopyala |
 | `disariYonlendirme` | durak | `true` ise şoförler başka duraklardan da anlaşmalı arkadaş seçebilir |
 | `pasif` | şoför | `true`: paketi yenilenmedi. Sayfası durağın numarasını gösterir, şoförün numarası kalkar |
+
+Fotoğrafları `data/foto/` klasörüne koy (jpg, png ya da webp), alanda `foto/dosya-adi.jpg` diye yaz. Telefonda hızlı açılsın diye her fotoğraf 1200 px genişliği ve 300 KB'ı geçmesin. Yolcu gelen aracı fotoğraftan tanır, bu yüzden aracın önden ve plakası görünen bir fotoğrafı en iyisi.
 
 Tanıtım sayfasındaki fiyat hesaplayıcı `paketler[].aracBasi`, `yenilemeAracBasi` ve `enAz` alanlarını kullanır. `marka.odemeNotu` fiyatın altında yazar.
 

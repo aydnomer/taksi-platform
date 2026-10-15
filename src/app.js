@@ -639,25 +639,58 @@
     o.innerHTML = '<span>Paylaş burada</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M5 13l7 7 7-7"/></svg>';
     p.appendChild(o);
   }
-  // İlk ziyarette (yüklü değilse) birkaç saniye sonra bir kere hatırlat
-  function kurulumHatirlat(ad, s) {
-    if (KURULU || HASH || ls("taksicim_hatirlatildi_" + s.kod)) return;
-    setTimeout(function () {
-      if (document.querySelector(".perde") || document.hidden || document.querySelector(".kur-serit") || ls("taksicim_hatirlatildi_" + s.kod)) return;
-      ls("taksicim_hatirlatildi_" + s.kod, 1);
-      var b = document.createElement("div");
-      b.className = "kur-serit";
-      b.innerHTML = '<span class="lamba">TAKSİ</span><p><b>' + esc(ad) + "</b> telefonunda dursun mu? Bir dahaki sefere tek dokunuş.</p>" +
-        '<button class="btn btn-sari" data-kur>Ekle</button><button class="kur-kapat" aria-label="Kapat">' + ik("sil") + "</button>";
-      document.body.appendChild(b);
-      b.querySelector("[data-kur]").addEventListener("click", function () { b.remove(); anaEkranaEkle(ad, s); });
-      b.querySelector(".kur-kapat").addEventListener("click", function () { b.remove(); });
-    }, 6000);
-  }
-
   function demoSerit(metin) {
     return '<div class="demo-serit">' + metin + "</div>";
   }
+
+  // ---------- ortak görsel parçalar ----------
+  // Fotoğraf yoksa çizim: gece sokakta sarı taksi. Renk durağın rengini izler.
+  function taksiCizim(soluk, kapak) {
+    return '<svg class="cizim' + (soluk ? " soluk" : "") + '" viewBox="0 0 400 250" preserveAspectRatio="' + (kapak ? "xMidYMax meet" : "xMidYMax slice") + '" aria-hidden="true">' +
+      '<defs><linearGradient id="gk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2030"/><stop offset="1" stop-color="#2b2f3d"/></linearGradient></defs>' +
+      '<rect width="400" height="250" fill="url(#gk)"/>' +
+      '<g fill="#3a4052"><rect x="10" y="60" width="60" height="130"/><rect x="80" y="30" width="70" height="160"/><rect x="250" y="50" width="60" height="140"/><rect x="320" y="20" width="70" height="170"/></g>' +
+      '<g fill="#ffd36b" opacity=".55"><rect x="22" y="75" width="8" height="10"/><rect x="44" y="95" width="8" height="10"/><rect x="95" y="50" width="8" height="10"/><rect x="120" y="80" width="8" height="10"/><rect x="265" y="70" width="8" height="10"/><rect x="335" y="45" width="8" height="10"/><rect x="360" y="90" width="8" height="10"/></g>' +
+      '<rect y="190" width="400" height="60" fill="#15171c"/><g fill="#555b66"><rect x="20" y="222" width="40" height="4"/><rect x="110" y="222" width="40" height="4"/><rect x="200" y="222" width="40" height="4"/><rect x="290" y="222" width="40" height="4"/></g>' +
+      '<g transform="translate(70 112)">' +
+      '<rect x="112" y="0" width="56" height="16" rx="3" fill="#111"/><text x="140" y="12" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="11" fill="var(--sari)">TAKSİ</text>' +
+      '<path d="M40 50 L80 18 Q90 14 110 14 L180 14 Q200 14 214 26 L248 50 Q275 52 282 66 L284 88 L8 88 L8 70 Q10 54 40 50 Z" fill="var(--sari)"/>' +
+      '<path d="M84 24 Q92 20 108 20 L140 20 L140 48 L58 48 Z M148 20 L180 20 Q196 20 206 30 L224 48 L148 48 Z" fill="#26303f"/>' +
+      '<rect x="8" y="66" width="276" height="6" fill="#111" opacity=".85"/><rect x="0" y="64" width="12" height="8" rx="2" fill="#ffe9a3"/><rect x="278" y="62" width="10" height="8" rx="2" fill="#ff5d5d"/>' +
+      '<circle cx="70" cy="90" r="24" fill="#111"/><circle cx="70" cy="90" r="10" fill="#777"/><circle cx="222" cy="90" r="24" fill="#111"/><circle cx="222" cy="90" r="10" fill="#777"/></g></svg>';
+  }
+  // Fotoğraflar data/foto klasöründen gelir ("foto/ahmet-arac.jpg"); tam adres de yazılabilir
+  function fotoYol(src) { return /^https?:\/\//.test(src) ? src : (P ? P.base : "") + String(src).replace(/^\//, ""); }
+  function gorsel(src, soluk, kapak) {
+    return src ? '<img src="' + esc(fotoYol(src)) + '" alt=""' + (kapak ? "" : ' loading="lazy"') + (soluk ? ' class="soluk"' : "") + ">" : taksiCizim(soluk, kapak);
+  }
+  // Ana ekrana ekle kartı: sayfayla birlikte hemen çıkar (tarayıcının "yüklenebilir" haberini beklemez)
+  function kurKart(ad, s) {
+    if (KURULU) return "";
+    return '<div class="y-kur"><div><b>Telefonuna ekle</b><p>Bir dahakine uygulamayı aç, tek dokunuşla çağır.</p>' +
+      (IOS ? '<small>Safari\'de alttaki ' + PAYLAS_IK + ' simgesine bas, <b>Ana Ekrana Ekle</b>\'yi seç.</small>' : "") +
+      '</div><button class="btn btn-sari" data-ekle>' + (IOS ? "Nasıl?" : "Uygulamayı yükle") + "</button></div>";
+  }
+  var YORUM_RENK = ["#3b6fd8", "#c2410c", "#0f766e", "#7c3aed", "#b45309"];
+  function yorumBolumu(kaynak, olayKod, link) {
+    var g = kaynak.google || {};
+    if (!g.puan && !link) return "";
+    var h = '<section class="y-bolum"><h2>Yolcularımız ne diyor</h2><div class="y-puan">';
+    if (g.puan) h += '<div class="y-puan-ust"><strong>' + esc(String(g.puan).replace(".", ",")) + '</strong><div><span class="y-yildiz" aria-label="5 üzerinden ' + esc(String(g.puan)) + ' yıldız">★★★★★</span><small>Google\'da ' + esc(String(g.sayi || "")) + " yorum</small></div><span class=\"y-g\">" + GOOGLE_G + "</span></div>";
+    if (g.yorumlar && g.yorumlar.length) {
+      h += '<div class="y-yorumlar">' + g.yorumlar.map(function (y, i) {
+        return '<div class="y-yorum"><div class="y-yorum-kim"><i style="background:' + YORUM_RENK[i % YORUM_RENK.length] + '">' + esc((y.ad || "?").charAt(0)) + "</i>" + esc(y.ad) + '</div><span class="y-yildiz">' + "★★★★★".slice(0, y.yildiz || 5) + "</span><p>" + esc(y.metin) + "</p></div>";
+      }).join("") + "</div>";
+    }
+    if (link) h += '<a class="y-yorum-yap" href="' + esc(link) + '" target="_blank" rel="noopener" data-google="' + esc(olayKod) + '">' + ik("yildiz") + "Google'da yorum yap</a>";
+    return h + "</div></section>";
+  }
+  function imza() {
+    var M = S.marka;
+    return '<footer class="y-alt"><p>Web tasarım ve geliştirme: <a href="' + link("tanitim") + '">' + esc(M.gelistirici || M.ad) + "</a>" +
+      (M.iletisimTelefon ? ' · <a href="tel:' + esc(telSade(M.iletisimTelefon)) + '">' + esc(telGoster(M.iletisimTelefon)) + "</a>" : "") + "</p></footer>";
+  }
+  var VARSAYILAN_OZELLIK = ["Resmi ticari plaka, sigortalı araç", "Her yolculuktan önce temizlenir", "Klimalı, ferah yolculuk", "Aileye uygun, saygılı şoförler", "Taksimetre, belediye tarifesi"];
 
   // ======================================================
   // ŞOFÖR SAYFASI
@@ -672,6 +705,7 @@
   }
   var ODEME = { nakit: "Nakit", kart: "Kart geçer", iban: "IBAN / havale", fatura: "Fatura kesilir" };
 
+  // Sade şoför sayfası: fotoğraf + kim olduğu, tek büyük ara, konum, uygulamaya ekle. Gerisi aşağıda küçük.
   function sayfaSofor(kod) {
     var s = sofor(kod);
     if (!s) return pasifSayfa(kod);
@@ -687,89 +721,80 @@
 
     var h = "";
     if (demo) h += demoSerit('Örnek sayfa. Butonlar gerçek arama yapmaz. <a href="' + link("panel", s.kod) + '">Şoför panelinden durumu değiştir</a>');
-    h += '<div class="sf uyg">';
-    h += '<div class="sf-ust">' +
-      (d ? '<a class="sf-durak" href="' + link("durak", d.kod) + '"><span class="lamba">TAKSİ</span><span><b>' + esc(d.ad) + "</b><small>" + esc(d.altAd || S.marka.sehir) + "</small></span></a>"
-         : '<span class="sf-durak"><span class="lamba">TAKSİ</span><span><b>' + esc(ad) + "</b><small>Bağımsız taksici · " + esc(S.marka.sehir) + "</small></span></span>") +
-      (KURULU || aracta ? "" : '<button class="btn btn-hayalet sf-ekle" data-ekle>' + ik("ekle") + "Ana ekrana ekle</button>") + "</div>";
+    h += '<div class="y-sayfa">';
+    // Kapak: aracın fotoğrafı, üstünde durak adı, altta kim olduğu
+    h += '<header class="y-kapak y-kapak-sofor"><div class="y-kapak-gorsel">' + gorsel(s.aracFoto, false, true) + "</div>" +
+      '<div class="y-ust"><div class="y-ic">' +
+      (d ? '<a class="y-marka" href="' + link("durak", d.kod) + '">' + esc(d.ad) + "<small>" + esc(d.altAd || S.marka.sehir) + "</small></a>"
+         : '<span class="y-marka">' + esc(ad) + "<small>Bağımsız taksici · " + esc(S.marka.sehir) + "</small></span>") +
+      "</div></div>" +
+      '<div class="y-ic y-kimlik"><div class="y-yuz" aria-hidden="true">' + (s.foto ? '<img src="' + esc(fotoYol(s.foto)) + '" alt="">' : esc(bas(s.ad))) + "</div>" +
+      '<div class="y-kim"><h1>' + esc(s.ad) + "</h1><p>" + esc(s.arac) + (s.yil ? " · " + s.yil + " yıllık şoför" : "") + "</p>" +
+      '<div class="y-satir">' + plaka(s.plaka) + durumRozet(s.kod) + "</div></div></div></header>";
 
-    // Pleksiyi okutan: "Bu araçtasın" (önce güvenlik ve kaydetme, çağırma sonra)
+    h += '<main class="y-ic y-govde">';
     if (aracta) {
-      h += '<div class="aracta"><p class="etiket-ust">' + ik("kalkan") + "Bu araçtasın</p><h2>" + esc(ek(ad, "in")) + " aracı</h2><p>" + esc(s.plaka) + " · " + esc(s.arac) + "</p>" +
-        '<button class="btn btn-sari btn-blok" data-paylas>' + ik("kalkan") + "Yolculuğumu ailemle paylaş</button>" +
-        '<div class="sf-ikili">' + (KURULU ? "" : '<button class="btn btn-hayalet" data-ekle>' + ik("ekle") + "Ana ekrana ekle</button>") + '<button class="btn btn-hayalet" data-rehber>' + ik("rehber") + "Rehbere kaydet</button></div>" +
-        '<p class="aracta-not">Bir dahaki sefere ' + esc(ek(ad, "i")) + " tek dokunuşla çağırırsın.</p></div>";
+      h += '<div class="y-aracta"><b>' + ik("kalkan") + "Bu araçtasın</b><p>" + esc(ek(ad, "in")) + " aracı, " + esc(s.plaka) + ". Yolculuğunu ailene bir dokunuşla gönderebilirsin.</p>" +
+        '<button class="btn btn-hayalet btn-blok" data-paylas>' + ik("kalkan") + "Yolculuğumu ailemle paylaş</button></div>";
     }
-
-    h += '<div class="sf-kart">';
-    h += '<div class="dama ince" aria-hidden="true"></div>';
-    h += '<div class="sf-kimlik"><div class="avatar" aria-hidden="true">' + (s.foto ? '<img src="' + esc(s.foto) + '" alt="">' : esc(bas(s.ad))) + '</div><div style="min-width:0"><h1>' + esc(s.ad) + '</h1><p class="alt">' + esc(s.arac) + (s.yil ? " · " + s.yil + " yıllık şoför" : "") + "</p></div></div>";
-    h += '<div class="sf-bilgi">' + plaka(s.plaka) + durumRozet(s.kod) + "</div>";
+    // Asıl iş: tek büyük düğme. Şoför meşgulse düğme kendiliğinden arkadaşını arar.
+    if (sec.yonlendi && sec.hedef) {
+      var y = sec.hedef;
+      h += '<p class="y-not">' + ik("saat") + "<span><b>" + esc(ad) + "</b> " + (du.durum === "yolcuda" ? "yolcuda" + (du.kalan ? " (yaklaşık " + du.kalan + " dk)" : "") : "şu an çalışmıyor") + ". Anlaşmalı arkadaşı <b>" + esc(y.hitap || y.ad) + "</b> müsait.</span></p>" +
+        '<button class="y-cagir" data-ara="' + y.kod + '"><b>' + ik("tel") + esc(ek(y.hitap || y.ad, "i")) + " ara</b><small>" + esc(y.arac) + " · " + esc(y.plaka) + "</small></button>" +
+        '<button class="y-konum" data-konum="' + y.kod + '">' + ik("wa") + "Konumumu WhatsApp'tan at</button>" +
+        '<button class="y-ince" data-ara="' + s.kod + '">' + ik("tel") + "Yine de " + esc(ek(ad, "i")) + " ara</button>";
+    } else if (sec.yonlendi) {
+      h += '<p class="y-not">' + ik("uyari") + "<span><b>" + esc(ad) + "</b> ve anlaşmalı arkadaşları şu an yolcuda." + (d ? " Durağı ara, ilk boşalan araç gelsin." : " Birkaç dakika sonra tekrar dene.") + "</span></p>" +
+        (d ? '<button class="y-cagir" data-durak><b>' + ik("tel") + "Durağı ara</b><small>" + esc(d.ad) + " · " + esc(telGoster(d.telefon)) + "</small></button>" : "") +
+        '<button class="y-konum" data-konum="' + s.kod + '">' + ik("wa") + "Konumumu WhatsApp'tan at</button>" +
+        '<button class="y-ince" data-ara="' + s.kod + '">' + ik("tel") + "Yine de " + esc(ek(ad, "i")) + " ara</button>";
+    } else {
+      h += '<button class="y-cagir" data-ara="' + s.kod + '"><b>' + ik("tel") + esc(ek(ad, "i")) + " ara</b><small>" + esc(telGoster(s.telefon)) + "</small></button>" +
+        '<button class="y-konum" data-konum="' + s.kod + '">' + ik("wa") + "Konumumu WhatsApp'tan at</button>";
+    }
     var bilgi = [];
     if (s.calisma) bilgi.push(ik("saat") + (mesai === false ? "<b>Şu an çalışmıyor.</b> Çalışma saati " : "Çalışma saati ") + esc(s.calisma));
     var od = (s.odeme || (d && d.odeme) || []).map(function (x) { return ODEME[x] || x; });
     if (od.length) bilgi.push(ik("kart") + esc(od.join(" · ")));
-    if (bilgi.length) h += '<ul class="sf-satirlar">' + bilgi.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>";
+    if (bilgi.length) h += '<ul class="y-bilgi">' + bilgi.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul>";
 
-    if (aracta) h += '<p class="sf-ara-baslik">Taksi lazım olursa</p>';
-    if (sec.yonlendi && sec.hedef) {
-      var y = sec.hedef;
-      h += '<div class="yonlendir"><div class="baslik">' + ik("saat") + "<p><b>" + esc(ad) + "</b> " + (du.durum === "yolcuda" ? "yolcuda" + (du.kalan ? " (yaklaşık " + du.kalan + " dk)" : "") : "şu an çalışmıyor") +
-        ". Yerine anlaşmalı arkadaşı <b>" + esc(y.hitap || y.ad) + "</b> müsait.</p></div></div>";
-      h += '<div class="sf-cagir"><button class="btn btn-sari btn-cagir" data-ara="' + y.kod + '"><span class="ust">' + ik("tel") + esc(ek(y.hitap || y.ad, "i")) + " ara</span><small>" + esc(y.arac) + " · " + esc(y.plaka) + "</small></button>" +
-        '<div class="sf-ikili"><button class="btn btn-wa" data-konum="' + y.kod + '">' + ik("wa") + "WhatsApp'tan konum at</button>" +
-        '<button class="btn btn-hayalet" data-ara="' + s.kod + '">' + ik("tel") + "Yine de " + esc(ek(ad, "i")) + " ara</button></div></div>";
-    } else if (sec.yonlendi) {
-      h += '<div class="yonlendir"><div class="baslik">' + ik("uyari") + "<p><b>" + esc(ad) + "</b> ve anlaşmalı arkadaşları şu an yolcuda." + (d ? " Durağı ara, ilk boşalan araç gelsin." : " Birkaç dakika sonra tekrar dene.") + "</p></div></div>";
-      h += '<div class="sf-cagir">' + (d ? '<button class="btn btn-sari btn-cagir" data-durak><span class="ust">' + ik("tel") + "Durağı ara</span><small>" + esc(d.ad) + " · " + esc(telGoster(d.telefon)) + "</small></button>" : "") +
-        '<div class="sf-ikili"><button class="btn btn-wa" data-konum="' + s.kod + '">' + ik("wa") + "WhatsApp'tan konum at</button>" +
-        '<button class="btn btn-hayalet" data-ara="' + s.kod + '">' + ik("tel") + "Yine de " + esc(ek(ad, "i")) + " ara</button></div></div>";
-    } else {
-      h += '<div class="sf-cagir"><button class="btn btn-sari btn-cagir" data-ara="' + s.kod + '"><span class="ust">' + ik("tel") + "Taksi çağır</span><small>" + esc(ad) + " · " + esc(telGoster(s.telefon)) + "</small></button>" +
-        '<div class="sf-ikili"><button class="btn btn-wa" data-konum="' + s.kod + '">' + ik("wa") + "WhatsApp'tan konum at</button>" +
-        (aracta ? '<button class="btn btn-hayalet" data-esya>' + ik("uyari") + "Eşya unuttum</button>" : '<button class="btn btn-hayalet" data-rehber>' + ik("rehber") + "Rehbere kaydet</button>") + "</div></div>";
-    }
-    h += "</div>";
+    h += kurKart(ad, s);
 
     // Meşgulken gelecekler: müsait olan üstte, büyük düğmede zaten olan tekrar edilmez
     var yed = yedekleri(s).filter(function (k) { return !(sec.hedef && sec.hedef.kod === k.kod && sec.yonlendi); });
     var sira = { musait: 0, bilinmiyor: 1, yolcuda: 2, kapali: 3 };
     yed.sort(function (a, b) { return sira[durumu(a.kod).durum] - sira[durumu(b.kod).durum]; });
     if (yed.length) {
-      h += '<section class="bolum"><h2>' + (sec.yonlendi && sec.hedef ? "Diğer seçenekler" : esc(ad) + " meşgulse bunlar gelir") + "</h2><div class=\"liste\">";
+      h += '<section class="y-bolum"><h2>' + (sec.yonlendi && sec.hedef ? "Diğer seçenekler" : esc(ad) + " meşgulse") + '</h2><div class="y-liste">';
       yed.forEach(function (k) {
-        var kx = durumu(k.kod), kd = kx.durum;
-        var kdurak = duragi(k);
-        h += '<div class="kisi' + (kd === "musait" ? "" : " pasif") + '"><div class="avatar' + (kd === "musait" ? "" : " soluk") + '" aria-hidden="true">' + esc(bas(k.ad)) + '</div><div class="ad"><b>' + esc(k.hitap || k.ad) + "</b><small>" + esc(k.plaka) + " · " + esc(kdurak ? kdurak.ad : "Bağımsız") + "</small>" +
-          durumRozet(k.kod) + "</div>" +
-          '<button class="ara" data-ara="' + k.kod + '" aria-label="' + esc(ek(k.hitap || k.ad, "i")) + ' ara"' + (kd === "kapali" ? " disabled" : "") + ">" + ik("tel") + "</button></div>";
+        var kd = durumu(k.kod).durum;
+        h += '<div class="y-kisi' + (kd === "musait" ? "" : " pasif") + '"><div class="y-kucuk-gorsel">' + gorsel(k.aracFoto, kd !== "musait") + '</div><div class="ad"><b>' + esc(k.hitap || k.ad) + "</b><small>" + esc(k.plaka) + "</small>" + durumRozet(k.kod) + "</div>" +
+          '<button class="y-kisi-ara" data-ara="' + k.kod + '" aria-label="' + esc(ek(k.hitap || k.ad, "i")) + ' ara"' + (kd === "kapali" ? " disabled" : "") + ">" + ik("tel") + "</button></div>";
       });
       h += "</div></section>";
     }
 
-    var gy = s.googleYorum || (d && d.googleYorum);
-    h += '<section class="bolum"><div class="liste">';
-    if (gy) h += '<a class="google" href="' + esc(gy) + '" target="_blank" rel="noopener" data-google><span class="g">' + GOOGLE_G + "</span><span><b>Google'da değerlendir</b><small>Puanı sen verirsin. Her yorum okunuyor.</small></span><span class=\"ok\">" + ik("ok") + "</span></a>";
-    if (!aracta && sec.yonlendi) h += '<button class="google satir-btn" data-rehber><span class="g" style="background:var(--sari);color:#111">' + ik("rehber") + "</span><span><b>" + esc(ek(ad, "i")) + " rehbere kaydet</b><small>Numarası ve sayfası telefonunda dursun</small></span><span class=\"ok\">" + ik("ok") + "</span></button>";
-    if (!d) h += '<button class="google satir-btn" data-tavsiye><span class="g" style="background:var(--sari);color:#111">' + ik("yildiz") + "</span><span><b>" + esc(ek(ad, "i")) + " tavsiye et</b><small>Sayfasını bir arkadaşına gönder</small></span><span class=\"ok\">" + ik("ok") + "</span></button>";
-    if (d) h += '<a class="google" href="' + link("durak", d.kod) + '"><span class="g" style="background:var(--sari);color:#111">' + ik("ev") + "</span><span><b>" + esc(d.ad) + "</b><small>Durağın sitesi, bütün araçlar</small></span><span class=\"ok\">" + ik("ok") + "</span></a>";
-    h += "</div></section>";
-
-    h += '<section class="bolum"><h2>Güvenli yolculuk</h2><div class="liste">' +
-      (aracta ? "" : '<button class="google satir-btn" data-paylas><span class="g" style="background:var(--yuzey-2);color:var(--metin)">' + ik("kalkan") + "</span><span><b>Yolculuğumu ailemle paylaş</b><small>Plaka, şoför ve konumun tek mesajda</small></span><span class=\"ok\">" + ik("ok") + "</span></button>") +
-      '<button class="google satir-btn" data-esya><span class="g" style="background:var(--yuzey-2);color:var(--metin)">' + ik("uyari") + "</span><span><b>Araçta eşya mı unuttun?</b><small>" + esc(d ? ek(d.ad, "e") : ek(ad, "e")) + " hazır mesajla bildir</small></span><span class=\"ok\">" + ik("ok") + "</span></button></div></section>";
+    h += yorumBolumu(s.google ? s : (d || s), s.kod, s.googleYorum || (d && d.googleYorum));
 
     if (!d && s.hizmetler && s.hizmetler.length) {
       var ikn = { sehir: "sehir", ucak: "ucak", yol: "yol", ay: "ay" };
-      h += '<section class="bolum"><h2>Hizmetler</h2>' + (s.tanitim ? '<p style="color:var(--soluk);margin:-4px 0 12px">' + esc(s.tanitim) + "</p>" : "") + '<div class="liste">' +
-        s.hizmetler.map(function (x) { return '<div class="google" style="align-items:flex-start"><span class="g" style="background:var(--sari);color:#111">' + ik(ikn[x.ikon] || "sehir") + "</span><span><b>" + esc(x.baslik) + "</b><small>" + esc(x.metin) + "</small></span></div>"; }).join("") + "</div>" +
-        (s.bolgeler && s.bolgeler.length ? '<div class="cipler-sabit" style="margin-top:12px">' + s.bolgeler.map(function (b) { return "<span>" + esc(b) + "</span>"; }).join("") + "</div>" : "") +
-        '<button class="btn btn-hayalet btn-blok" style="margin-top:12px" data-rezervasyon>' + ik("saat") + "İleri saate taksi ayırt</button></section>";
+      h += '<section class="y-bolum"><h2>Neler yapıyorum</h2><div class="y-serit">' +
+        s.hizmetler.map(function (x) { return "<div>" + ik(ikn[x.ikon] || "sehir") + esc(x.baslik) + "</div>"; }).join("") + "</div></section>";
     }
 
-    h += '<p class="kucuk-not">Konumunu ve numaranı saklamayız. Konum sadece senin WhatsApp\'ından şoföre gider.</p>';
-    h += '<p class="alt-imza"><a href="' + link("tanitim") + '">' + esc(S.marka.ad) + "</a> ile hazırlandı</p>";
-    h += "</div>";
+    // Az kullanılanlar: küçük satırlar, en altta
+    h += '<section class="y-bolum"><div class="y-kucuk-liste">' +
+      (aracta ? '<button data-esya>' + ik("uyari") + "Araçta eşya mı unuttun?</button>" : '<button data-rehber>' + ik("rehber") + "Rehbere kaydet</button>") +
+      '<button data-rezervasyon>' + ik("saat") + "İleri saate taksi ayırt</button>" +
+      (aracta ? "" : '<button data-paylas>' + ik("kalkan") + "Yolculuğumu ailemle paylaş</button>") +
+      (!aracta ? '<button data-esya>' + ik("uyari") + "Araçta eşya mı unuttun?</button>" : "") +
+      (!d ? '<button data-tavsiye>' + ik("yildiz") + esc(ek(ad, "i")) + " tavsiye et</button>" : "") +
+      (d ? '<a href="' + link("durak", d.kod) + '">' + ik("ev") + esc(d.ad) + ", bütün araçlar</a>" : "") +
+      "</div></section>";
+
+    h += '<p class="y-gizlilik">Konumunu ve numaranı saklamayız. Konum sadece senin WhatsApp\'ından şoföre gider.</p>';
+    h += "</main>" + imza() + "</div>";
     app.innerHTML = h;
 
     app.querySelectorAll("[data-ara]").forEach(function (b) {
@@ -784,8 +809,7 @@
     app.querySelectorAll("[data-esya]").forEach(function (b) { b.addEventListener("click", function () { esyaUnuttum(d, demo, s); }); });
     var dk = app.querySelector("[data-durak]");
     if (dk) dk.addEventListener("click", function () { ara(d, { kaynak: s, yonlendi: true, demo: demo }); });
-    var g = app.querySelector("[data-google]");
-    if (g) g.addEventListener("click", function () { Depo.olay(s.kod, "google"); });
+    app.querySelectorAll("[data-google]").forEach(function (g) { g.addEventListener("click", function () { Depo.olay(g.dataset.google, "google"); }); });
     var tv = app.querySelector("[data-tavsiye]");
     if (tv) tv.addEventListener("click", function () {
       var m = "Taksi lazım olursa " + ad + "'i tavsiye ederim (" + s.plaka + "). Tek dokunuşla buradan çağırılıyor:\n" + tamLink(s);
@@ -796,8 +820,8 @@
     });
     var rz = app.querySelector("[data-rezervasyon]");
     if (rz) rz.addEventListener("click", function () { rezervasyon(s, demo); });
-    if (!aracta) kurulumHatirlat(ad, s);
   }
+
 
   // Havalimanı, otogar, sabah erken: hazır WhatsApp mesajıyla taksi ayırt
   function rezervasyon(hedef, demo) {
@@ -870,6 +894,7 @@
   // ======================================================
   // DURAK SİTESİ
   // ======================================================
+  // Sade durak sitesi: fotoğraflı giriş + tek çağır, fotoğraflı şoför kartları, araçlar, Google yorumları.
   function sayfaDurak(kod) {
     var d = durak(kod);
     if (!d) return bulunamadi();
@@ -881,82 +906,64 @@
     var ikonlar = { sehir: "sehir", ucak: "ucak", yol: "yol", ay: "ay", kalkan: "kalkan", saat: "saat" };
     var sonSofor = sofor(ls("taksicim_son_" + d.kod));
     if (sonSofor && sonSofor.durak !== d.kod) sonSofor = null;
-    var od = (d.odeme || []).map(function (x) { return ODEME[x] || x; });
+    var sira = { musait: 0, bilinmiyor: 1, yolcuda: 2, kapali: 3 };
+    var sirali = sf.slice().sort(function (a, b) { return sira[durumu(a.kod).durum] - sira[durumu(b.kod).durum]; });
+    var slogan = d.slogan ? d.slogan.split("|") : [S.marka.sehir + "'da taksin", "bir dokunuş", "uzağında"];
 
     var h = "";
     if (demo) h += demoSerit('Örnek durak sitesi. Butonlar gerçek arama yapmaz. <a href="' + link("yonetim", d.kod) + '">Durak panelini gör</a>');
-    h += '<header class="dk-nav"><div class="kap"><span class="sf-durak"><span class="lamba">TAKSİ</span><span><b>' + esc(d.ad) + "</b><small>" + esc(S.marka.sehir) + " · " + esc(d.acik || "7/24") + "</small></span></span>" +
-      '<nav aria-label="Bölümler"><a href="#soforler">Araçlarımız</a><a href="#hizmetler">Hizmetler</a><a href="#guven">Güvenli yolculuk</a><a href="#iletisim">İletişim</a></nav>' +
-      '<button class="btn btn-sari dk-nav-tel" data-durak-ara aria-label="Durağı ara: ' + esc(telGoster(d.telefon)) + '">' + ik("tel") + '<span class="uzun">' + esc(telGoster(d.telefon)) + '</span><span class="kisa">Ara</span></button></div></header>';
+    h += '<div class="y-sayfa">';
+    h += '<header class="y-kapak"><div class="y-kapak-gorsel">' + gorsel(d.kapakFoto || (sf[0] && sf[0].aracFoto), false, true) + "</div>" +
+      '<div class="y-ust"><div class="y-ic"><span class="y-marka">' + esc(d.ad) + "<small>" + esc(S.marka.sehir) + " · " + esc(d.acik || "7/24") + ' açık</small></span>' +
+      '<button class="y-tel" data-durak-ara aria-label="Durağı ara: ' + esc(telGoster(d.telefon)) + '">' + esc(telGoster(d.telefon)) + "</button></div></div>" +
+      '<div class="y-ic y-giris"><span class="y-canli' + (musait.length ? "" : " yok") + '">' + (musait.length ? "Şu an " + musait.length + " şoför müsait" : "Şu an bütün araçlar yolcuda") + "</span>" +
+      "<h1>" + esc(slogan[0]) + (slogan[1] ? " <em>" + esc(slogan[1]) + "</em>" : "") + (slogan[2] ? " " + esc(slogan[2]) : "") + "</h1>" +
+      "<p>" + esc(d.tanitim || "Gece gündüz, şehir içi ve havalimanı. Bas, ara, birkaç dakikada kapında.") + "</p>" +
+      '<div id="dk-eylem" class="y-eylem"><button class="y-cagir" data-musait-cagir><b>' + ik("tel") + "Taksi çağır</b><small>" + (musait.length ? "Müsait bir şoförümüze bağlanırsın" : "Çağrın durağa gider") + "</small></button>" +
+      '<button class="y-konum cam" data-durak-konum>' + ik("wa") + "Konumumu WhatsApp'tan at</button></div></div></header>";
 
-    // Açılış: tek iş, taksi çağırmak
-    h += '<section class="dk-hero"><div class="kap"><div>' +
-      '<p class="etiket-ust">' + esc(S.marka.sehir) + " · " + esc(d.acik || "7/24") + " · " + sf.length + " araç</p>" +
-      '<h1 style="margin-top:12px">' + (d.slogan ? esc(d.slogan.split("|")[0]) + (d.slogan.split("|")[1] ? " <em>" + esc(d.slogan.split("|")[1]) + "</em>" : "") : esc(S.marka.sehir) + "'da taksi, <em>tek dokunuşla.</em>") + "</h1>" +
-      '<p class="giris">' + esc(d.tanitim || "Müsait şoförümüz hangisiyse çağrın ona gider. Meşgul hat yok, bekleme yok.") + "</p>" +
-      '<div class="eylemler" id="dk-eylem"><button class="btn btn-sari btn-buyuk" data-musait-cagir>' + ik("tel") + "Taksi çağır</button>" +
-      '<button class="btn btn-wa btn-buyuk" data-durak-konum>' + ik("wa") + "WhatsApp'tan konum at</button></div>" +
-      '<p class="dk-not">' + (musait.length ? "Çağrın müsait bir şoförümüze bağlanır." : "Şu an bütün araçlar yolcuda; çağrın durağa gider.") + (d.whatsapp ? " Konum mesajı durağın WhatsApp'ına gider." : "") + "</p>" +
-      (sonSofor ? '<div class="dk-son"><span>Geçen sefer: <b>' + esc(sonSofor.hitap || sonSofor.ad) + "</b> · " + esc(sonSofor.plaka) + '</span><a class="btn btn-hayalet" href="' + link("sofor", sonSofor.kod) + '">' + ik("tel") + "Yine onu çağır</a></div>" : "") +
-      (d.google && d.google.puan ? '<a class="g-rozet" href="' + esc(d.googleYorum || "#") + '" target="_blank" rel="noopener"><span class="g">' + GOOGLE_G + "</span><b>" + esc(String(d.google.puan).replace(".", ",")) + "</b><span class=\"yildizlar\">★★★★★</span><small>" + esc(d.google.sayi) + " Google yorumu</small></a>" : "") +
-      "</div>";
-    h += '<div class="canli" aria-live="polite"><div class="canli-ust"><div class="sayi"><b>' + musait.length + "</b><span>araç şu an<br>müsait</span></div><span class=\"canli-isik\">Canlı</span></div>" +
-      '<div class="liste">' + sf.slice(0, 5).map(function (s) {
-        return '<div class="kisi" style="background:var(--yuzey-2)"><div class="avatar' + (durumu(s.kod).durum === "musait" ? "" : " soluk") + '" aria-hidden="true">' + esc(bas(s.ad)) + '</div><div class="ad"><b>' + esc(s.hitap || s.ad) + "</b><small>" + esc(s.plaka) + "</small></div>" + durumRozet(s.kod) + "</div>";
-      }).join("") + "</div></div></div></section>";
+    h += '<main class="y-ic y-govde">';
+    if (sonSofor) h += '<div class="y-son"><span>Geçen sefer: <b>' + esc(sonSofor.hitap || sonSofor.ad) + "</b> · " + esc(sonSofor.plaka) + '</span><a class="btn btn-hayalet" href="' + link("sofor", sonSofor.kod) + '">' + ik("tel") + "Yine onu çağır</a></div>";
+    h += kurKart(d.ad, null);
+    h += '<div class="y-serit">' + (d.hizmetler || []).slice(0, 4).map(function (x) { return "<div>" + ik(ikonlar[x.ikon] || "sehir") + esc(x.baslik) + "</div>"; }).join("") + "</div>";
 
-    var serit = [[d.acik || "7/24", d.acik && d.acik !== "7/24" ? "Çalışma saati" : "Gece gündüz açık"], [sf.length + " araç", "Hepsi ticari plakalı"], ["Taksimetre", od.length ? od.join(" · ") : "Belediye tarifesi"]];
-    if (d.kurulus) serit.push([ek(d.kurulus, "de") + "n beri", S.marka.sehir]);
-    else if (d.google && d.google.puan) serit.push([String(d.google.puan).replace(".", ",") + " ★", d.google.sayi + " Google yorumu"]);
-    h += '<div class="kap"><div class="serit serit-' + serit.length + '">' + serit.map(function (x) { return "<div><b>" + esc(x[0]) + "</b><small>" + esc(x[1]) + "</small></div>"; }).join("") + "</div></div>";
-
-    // Araçlar
-    h += '<section class="dk-bolum" id="soforler"><div class="kap"><h2>Araçlarımız</h2><p class="alt-baslik">Her aracın plakası ve şoförü burada. Kendi şoförünü seç; meşgulse sayfası seni müsait arkadaşına yönlendirir.</p><div class="izgara">';
-    sf.forEach(function (s) {
+    // Şoförler: fotoğraflı kartlar, müsait olan üstte
+    h += '<section class="y-bolum" id="soforler"><div class="y-bolum-ust"><h2>Şoförlerimiz</h2><span>' + sf.length + " araç</span></div><div class=\"y-soforler\">";
+    sirali.forEach(function (s) {
       var kd = durumu(s.kod).durum;
-      h += '<article class="sofor-kart"><div class="ust"><div class="avatar" aria-hidden="true">' + esc(bas(s.ad)) + "</div><div><b>" + esc(s.ad) + "</b><small>" + esc(s.arac) + (s.yil ? " · " + s.yil + " yıl" : "") + "</small></div></div>" +
-        '<div class="alt">' + plaka(s.plaka) + durumRozet(s.kod) + "</div>" +
-        '<div class="eylem"><a class="btn btn-hayalet" href="' + link("sofor", s.kod) + '">Şoför sayfası</a>' +
-        (kd === "musait" || kd === "bilinmiyor"
-          ? '<button class="btn btn-sari" data-sofor-ara="' + s.kod + '" aria-label="' + esc(ek(s.hitap || s.ad, "i")) + ' ara">' + ik("tel") + "</button>"
-          : '<a class="btn btn-hayalet" href="' + link("sofor", s.kod) + '" aria-label="' + esc(s.hitap || s.ad) + ' meşgul, yerine geleni gör" title="Meşgul: yerine geleni gör">' + ik("yonlen") + "</a>") + "</div></article>";
+      var bos = kd === "musait" || kd === "bilinmiyor";
+      var yer = bos ? null : hedefSec(s).hedef;
+      h += '<article class="y-sofor' + (bos ? "" : " yolda") + '"><a class="y-sofor-gorsel" href="' + link("sofor", s.kod) + '" aria-label="' + esc(s.ad) + ' sayfası">' + gorsel(s.aracFoto, !bos) + durumRozet(s.kod) + plaka(s.plaka) + "</a>" +
+        '<div class="y-sofor-alt"><div class="y-yuz" aria-hidden="true">' + (s.foto ? '<img src="' + esc(fotoYol(s.foto)) + '" alt="">' : esc(bas(s.ad))) + '</div><div class="ad"><b>' + esc(s.ad) + "</b><small>" + esc(s.arac) + (s.yil ? " · " + s.yil + " yıllık şoför" : "") + "</small></div>" +
+        (bos ? '<button class="y-sofor-ara" data-sofor-ara="' + s.kod + '">' + ik("tel") + esc(ek(s.hitap || s.ad, "i")) + " ara</button>"
+          : yer ? '<button class="y-sofor-ara ikinci" data-sofor-ara="' + yer.kod + '">' + ik("tel") + (kd === "kapali" ? "Kapalı · " : "Yolcuda · ") + esc(ek(yer.hitap || yer.ad, "i")) + " ara</button>"
+          : '<a class="y-sofor-ara ikinci" href="' + link("sofor", s.kod) + '">' + (kd === "kapali" ? "Şu an kapalı" : "Şu an yolcuda") + "</a>") +
+        "</div></article>";
     });
-    h += "</div></div></section>";
-
-    // Hizmetler
-    h += '<section class="dk-bolum dk-koyu" id="hizmetler"><div class="kap"><h2>Hizmetler</h2><p class="alt-baslik">Kısa mesafe de olsa uzun yol da olsa, telefonla ya da WhatsApp\'tan.</p><div class="izgara">';
-    (d.hizmetler || []).forEach(function (x) {
-      h += '<article class="hizmet"><div class="ik">' + ik(ikonlar[x.ikon] || "sehir") + "</div><h3>" + esc(x.baslik) + "</h3><p>" + esc(x.metin) + "</p></article>";
-    });
-    h += "</div>";
-    if (d.bolgeler && d.bolgeler.length) h += '<div class="bolgeler"><p class="etiket-ust">Sık gittiğimiz yerler</p><div class="cipler-sabit">' + d.bolgeler.map(function (b) { return "<span>" + esc(b) + "</span>"; }).join("") + "</div></div>";
-    h += '<button class="btn btn-sari dk-rez" data-rezervasyon>' + ik("saat") + "İleri saate taksi ayırt</button>";
-    if (d.sabitFiyatlar && d.sabitFiyatlar.length) h += '<div class="fiyat-tablo"><p class="etiket-ust">Sabit fiyatlı yolculuklar</p>' + d.sabitFiyatlar.map(function (f) { return '<div class="fiyat-satir"><span>' + esc(f.yer) + "</span><b>" + esc(f.fiyat) + "</b></div>"; }).join("") + "</div>";
     h += "</div></section>";
 
-    // Güvenli yolculuk
-    h += '<section class="dk-bolum" id="guven"><div class="kap"><h2>Güvenli yolculuk</h2><p class="alt-baslik">Gece eve dönen kızın, havalimanından gelen annen. Kimin aracına bindiğini bilsinler.</p><div class="izgara">' +
-      '<article class="hizmet"><div class="ik">' + ik("kalkan") + "</div><h3>Şoförünü tanı</h3><p>Her araçtaki pleksiyi okut, şoförün adı, plakası ve aracı karşına çıkar.</p></article>" +
-      '<article class="hizmet"><div class="ik">' + ik("konum") + '</div><h3>Yolculuğunu paylaş</h3><p>Plaka, şoför ve konumun tek dokunuşla ailene gider.</p><button class="btn btn-hayalet" data-paylas>Örnek mesajı gör</button></article>' +
-      '<article class="hizmet"><div class="ik">' + ik("uyari") + '</div><h3>Eşya mı unuttun?</h3><p>Aracı seç, ne unuttuğunu yaz. Mesaj durağa hazır gider.</p><button class="btn btn-hayalet" data-esya>Eşyamı bildir</button></article>' +
-      "</div></div></section>";
+    var oz = d.ozellikler || VARSAYILAN_OZELLIK;
+    h += '<section class="y-bolum"><h2>Araçlarımız</h2><ul class="y-ozellik">' + oz.map(function (x) { return "<li>" + ik("tik") + esc(x) + "</li>"; }).join("") + "</ul></section>";
+
+    h += yorumBolumu(d, "d:" + d.kod, d.googleYorum);
 
     if (d.sss && d.sss.length) {
-      h += '<section class="dk-bolum dk-koyu" id="sss"><div class="kap" style="max-width:760px"><h2>Sorular</h2><div style="margin-top:20px">';
-      d.sss.forEach(function (q) { h += '<details class="sss"><summary>' + esc(q.s) + "</summary><p>" + esc(q.c) + "</p></details>"; });
-      h += "</div></div></section>";
+      h += '<section class="y-bolum"><h2>Sık sorulanlar</h2><div class="y-sss">' + d.sss.slice(0, 4).map(function (q) { return "<details><summary>" + esc(q.s) + "</summary><p>" + esc(q.c) + "</p></details>"; }).join("") + "</div></section>";
     }
 
-    h += '<footer class="dk-alt" id="iletisim"><div class="kap"><div style="display:grid;gap:14px"><p class="etiket-ust">Bize ulaş</p><a class="tel" href="tel:' + esc(telSade(d.telefon)) + '" data-durak-ara-link>' + esc(telGoster(d.telefon)) + "</a><p style=\"color:var(--soluk)\">" + esc(d.adres) + "</p>" +
-      '<div style="display:flex;flex-wrap:wrap;gap:10px"><a class="btn btn-cizgi" href="https://www.google.com/maps/search/?api=1&query=' + d.konum.lat + "," + d.konum.lng + '" target="_blank" rel="noopener">' + ik("konum") + "Haritada aç</a>" +
-      (d.googleYorum ? '<a class="btn btn-cizgi" href="' + esc(d.googleYorum) + '" target="_blank" rel="noopener">' + ik("yildiz") + "Google'da değerlendir</a>" : "") + "</div></div>" +
-      '<div style="display:grid;gap:10px;align-content:start"><div class="dama" aria-hidden="true" style="border-radius:6px"></div><p style="color:var(--soluk);font-size:14px">© ' + new Date().getFullYear() + " " + esc(d.ad) + ' · <a href="' + link("yonetim", d.kod) + '" style="color:var(--soluk)">Durak yönetimi</a> · Site: <a href="' + link("tanitim") + '" style="color:var(--sari-metin)">' + esc(S.marka.ad) + "</a></p></div></div></footer>";
+    h += '<section class="y-bolum"><div class="y-kucuk-liste">' +
+      '<button data-rezervasyon>' + ik("saat") + "İleri saate taksi ayırt</button>" +
+      '<button data-esya>' + ik("uyari") + "Araçta eşya mı unuttun?</button></div></section>";
 
-    h += '<div class="yapiskan durak" id="dk-yapiskan"><button class="btn btn-sari" data-musait-cagir>' + ik("tel") + 'Taksi çağır</button><button class="btn btn-wa" data-durak-konum>' + ik("wa") + "WhatsApp</button></div>";
+    h += '<section class="y-bolum" id="iletisim"><div class="y-adres"><div><b>' + esc(d.ad) + "</b><span>" + esc(d.adres) + "</span></div>" +
+      '<a href="https://www.google.com/maps/search/?api=1&query=' + d.konum.lat + "," + d.konum.lng + '" target="_blank" rel="noopener">Haritada aç</a></div></section>';
+    h += '<p class="y-gizlilik"><a href="' + link("yonetim", d.kod) + '">Durak yönetimi</a></p>';
+    h += "</main>" + imza() + "</div>";
+
+    h += '<div class="y-yapiskan" id="dk-yapiskan"><button class="y-cagir-kucuk" data-musait-cagir>' + ik("tel") + 'Taksi çağır</button><button class="y-wa-kucuk" data-durak-konum>' + ik("wa") + "WhatsApp</button></div>";
     app.innerHTML = h;
 
     app.querySelectorAll("[data-durak-ara]").forEach(function (b) { b.addEventListener("click", function () { ara(d, { demo: demo, olayKod: "d:" + d.kod }); }); });
-    app.querySelectorAll("[data-durak-ara-link]").forEach(function (b) { b.addEventListener("click", function (e) { e.preventDefault(); ara(d, { demo: demo, olayKod: "d:" + d.kod }); }); });
     // Konum: durağın WhatsApp'ı varsa ona, yoksa müsait bir şoföre
     app.querySelectorAll("[data-durak-konum]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -967,6 +974,8 @@
     });
     var rz = app.querySelector("[data-rezervasyon]");
     if (rz) rz.addEventListener("click", function () { rezervasyon(d, demo); });
+    app.querySelectorAll("[data-ekle]").forEach(function (b) { b.addEventListener("click", function () { anaEkranaEkle(d.ad, null); }); });
+    app.querySelectorAll("[data-google]").forEach(function (g) { g.addEventListener("click", function () { Depo.olay(g.dataset.google, "google"); }); });
     // Alttaki sabit çubuk, üstteki büyük düğmeler görünmezken çıkar
     var ey = document.getElementById("dk-eylem"), yp = document.getElementById("dk-yapiskan");
     if (ey && yp && "IntersectionObserver" in window) {
@@ -988,8 +997,6 @@
         ara(s, { kaynak: s, yonlendi: false, demo: demo, olayKod: "d:" + d.kod });
       });
     });
-    var pb = app.querySelector("[data-paylas]");
-    if (pb && sf[0]) pb.addEventListener("click", function () { yolculukPaylas(sf[0], true); }); else if (pb) pb.hidden = true;
     var eb = app.querySelector("[data-esya]");
     if (eb) eb.addEventListener("click", function () { esyaUnuttum(d, demo); });
   }
