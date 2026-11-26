@@ -153,6 +153,18 @@ psql "SUPABASE_DB_URL" -f yedek.sql
 
 **Alan adı:** Pleksi basmadan önce alan adını al ve `marka.siteUrl` ile `marka.alanAdi`'nı güncelle. QR kodlar bu adresle üretilir; sonradan değişirse basılı pleksiler eski adrese gider.
 
+## Klasör yapısı
+
+| Klasör | İçerik |
+|---|---|
+| `data/` | `site.json` (bütün duraklar, şoförler ve ayarlar) ve `foto/` |
+| `src/` | Sayfa kodu (`app.js`), stil, service worker, yazı tipleri ve görseller |
+| `scripts/` | `build.mjs` (siteyi `dist/` klasörüne üretir), `ikon-uret.mjs` |
+| `sablonlar/` | Yeni durak, şoför ve bağımsız şoför için hazır JSON şablonları |
+| `supabase/` | `kurulum.sql`: tablolar, PIN ve sayaç fonksiyonları |
+| `docs/` | İnceleme notları |
+| `.github/workflows/` | `yayinla.yml` (yayın) ve `koruma.yml` (Supabase uyanık tutma ve yedek) |
+
 ## Bilgisayarda çalıştırma
 
 ```bash
